@@ -39,9 +39,9 @@ We hope to learn real-world applications of the lessons learned in class.
 
 ## Architecture Diagram
 
-- Upload the architecture diagram you made for your slide presentation to your repository, and include it in-line here.
+![Architecture Diagram](https://raw.githubusercontent.com/oplS17projects/voxos/master/Architechture%20Diagram.jpg)
 
-- Create several paragraphs of narrative to explain the pieces and how they interoperate.
+&nbsp;&nbsp;&nbsp;&nbsp;The Play Environment will be a sprite created by Bill which will then be mapped onto a cylindrical render layer using mode-lambda and racket/draw. This sprite will then be continuously rotated by updating its stored theta value to achieve a scrolling effect. A separate layer will be populated with the various other sprites in the game, such as the player, projectiles, and enemies. The sprite objects in the game will all be loaded and arranged on layers by mode-lamba and drawn on-screen by racket-draw. All the while, sound effects and music will be played using rsound. 
 
 ## Schedule
 
