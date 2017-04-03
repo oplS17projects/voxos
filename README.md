@@ -69,7 +69,7 @@ We hope to learn real-world applications of the lessons learned in class.
 
 ## Group Responsibilities
 
-### Anthony Voloshin @AnthonyVoloshin
+### Anthony Voloshin @AnthonyVoloshin (group leader)
 
 - environment
 - player movement
