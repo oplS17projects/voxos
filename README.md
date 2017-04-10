@@ -53,9 +53,9 @@ We hope to learn real-world applications of the lessons learned in class.
 - DONE: Bill's placeholder environmental artwork
 - DONE: Bill's placeholder player artwork
 
-![Sample sprites image:](https://raw.githubusercontent.com/oplS17projects/voxos/master/sample-sprites.png)
+![Sample sprites image](https://raw.githubusercontent.com/oplS17projects/voxos/master/sample-sprites.png)
 
-![Debug compiled sprite database:](https://raw.githubusercontent.com/oplS17projects/voxos/master/sprites.png)
+![Debug compiled sprite database](https://raw.githubusercontent.com/oplS17projects/voxos/master/sprites.png)
 
 ### Second Milestone (Sun Apr 16)
 
