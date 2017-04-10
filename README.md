@@ -49,9 +49,13 @@ We hope to learn real-world applications of the lessons learned in class.
 
 - We want to have a functioning environment - either static or scrolling
 - This will include interfacing with Bill's artwork
-- Bill's functioning external sprite database
-- Bill's placeholder environmental artwork
-- Bill's placeholder player artwork
+- DONE: Bill's functioning external sprite database
+- DONE: Bill's placeholder environmental artwork
+- DONE: Bill's placeholder player artwork
+
+![Sample sprites image:](https://raw.githubusercontent.com/oplS17projects/voxos/master/sample-sprites.png)
+
+![Debug compiled sprite database:](https://raw.githubusercontent.com/oplS17projects/voxos/master/sprites.png)
 
 ### Second Milestone (Sun Apr 16)
 
