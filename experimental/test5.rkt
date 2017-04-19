@@ -13,53 +13,81 @@
          mode-lambda/backend/gl)
 
 ; resolutions
-(define pWidth 720)
-(define pHeight 240)
-; sprites
-(define sprite-db (make-sprite-db))
-(add-sprite!/file sprite-db 'test   "test.png")
-(define compiled-db (compile-sprite-db sprite-db))
-(save-csd! compiled-db "test" #:debug? #t)
-(define test-idx   (sprite-idx compiled-db 'test))
-(define test-sprite (sprite 360.0 120.0 test-idx #:layer 0))
-; draw stuff
-(define rendering-states->draw (stage-draw/dc compiled-db pWidth pHeight 1))
+(define canvas-size-x 640)
+(define canvas-size-y 480)
+
+; sprites and layers
+(define sprite-db     (make-sprite-db))
+(add-sprite!/file sprite-db 'player   "../player.png")
+(define compiled-db   (compile-sprite-db sprite-db))
+(save-csd! compiled-db "voxos-sprite-db" #:debug? #t)
+(define player-index  (sprite-idx compiled-db 'player))
+(define bg-layer (layer (* 1.0 canvas-size-x) (* 1.0 canvas-size-y)))
+(define action-layer (layer (* 1.0 canvas-size-x) (* 1.0 canvas-size-y)))
+(define layer-config  (vector bg-layer action-layer))
+
+
+;(define static) -static list of sprites
+
+
+; state variables
 (define move-x 0.0)
+(define player-position-x 0.0)
+(define player-position-y 0.0)
+(define player-speed 5)
 
-(define MODES
-  (list (pict:arrowhead 30 0)
-        (image:add-line
-         (image:rectangle 100 100 "solid" "darkolivegreen")
-         25 25 75 75
-         (image:make-pen "goldenrod" 30 "solid" "round" "round"))))
+; draw
+(define rendering-states->draw
+  (stage-draw/dc compiled-db canvas-size-x canvas-size-y 2))
 
-(struct demo (g/v mode)
+(struct demo ()
   #:methods gen:word
 
   [(define (word-output w)
-     (match-define (demo g/v mode-n) w)
+     (match-define (demo) w)
 
-     (define bg-layer
-       (layer (- 360. move-x) 120. #:hw (* 1/2 360.) #:hh 120.))
+     (define player-sprite
+       (sprite player-position-x player-position-y player-index #:layer 1))
+     
+     (define dynamic (list player-sprite))
 
-     (define dynamic (list test-sprite))
-
-     (define lc2  (vector bg-layer))
-
-     (rendering-states->draw lc2 '() dynamic))
+     (rendering-states->draw layer-config '() dynamic))
 
    (define (word-event w e)
-     (match-define (demo g/v mode-n) w)
-
-     ;(define closed? #f)
+     (match-define (demo) w)
 
      (cond
        [(eq? e 'close) #f]
       
-       [(and (key-event? e) (not (eq? 'release (send e get-key-code))))
-        (demo g/v (fxmodulo (fx+ 1 mode-n) (length MODES)))]
+       ;[(and (key-event? e) (not (eq? 'release (send e get-key-code))))
+        ;(set! player-position-x (+ move-x 1))
+        ;(demo)]
 
-       [else (demo g/v mode-n)]))
+       [(and (key-event? e)
+             (eq? (send e get-key-code) #\w)
+             (eq? (send e get-key-code) #\d))
+        (set! player-position-y (- player-position-y player-speed))
+        (set! player-position-x (+ player-position-x player-speed)) 
+        (demo)]
+
+       
+       [(and (key-event? e) (eq? (send e get-key-code) #\w))
+        (set! player-position-y (- player-position-y player-speed))
+        (demo)]
+
+       [(and (key-event? e) (eq? (send e get-key-code) #\a))
+        (set! player-position-x (- player-position-x player-speed))
+        (demo)]
+
+       [(and (key-event? e) (eq? (send e get-key-code) #\s))
+        (set! player-position-y (+ player-position-y player-speed))
+        (demo)]
+
+       [(and (key-event? e) (eq? (send e get-key-code) #\d))
+        (set! player-position-x (+ player-position-x player-speed))
+        (demo)]
+
+       [else (demo)]))
    
    (define (word-tick w)
      (set! move-x (add1 move-x))
@@ -68,6 +96,6 @@
 (module+ main
   (call-with-chaos
    (make-gui #:mode 'gl-core
-             #:width pWidth
-             #:height pHeight)
-   (λ () (fiat-lux (demo (make-gui/val) 0)))))
+             #:width canvas-size-x
+             #:height canvas-size-y)
+   (λ () (fiat-lux (demo)))))
