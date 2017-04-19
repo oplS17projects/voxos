@@ -1,4 +1,4 @@
-# Voxos - 2D Side Scroller Game - Bill Bobos & Anthony Voloshin
+# Voxos - 2D Side Scroller Game - Bill Bobos
 
 
 ### Statement
@@ -29,13 +29,13 @@ We hope to learn real-world applications of the lessons learned in class.
 
 ### Deliverable and Demonstration
 
-- At the end of the project we hope to have a playable level with sound effects and music
+- At the end of the project I hope to have a playable level with sound effects and music
 - The game will be interactive and playable
 
 ### Evaluation of Results
 
-- We are successful if we can manage to create a functional demo
-- A functional demo that includes player movement, environment interaction, and player interaction
+- I'm successful if there is a functional demo
+- A functional demo that includes player movement, and player interaction
 
 ## Architecture Diagram
 
@@ -59,12 +59,18 @@ We hope to learn real-world applications of the lessons learned in class.
 ## Debug Image - Compiled Sprite Database
 ![Debug compiled sprite database](https://raw.githubusercontent.com/oplS17projects/voxos/master/sprites.png)
 
-### Second Milestone (Sun Apr 16)
+### Second Milestone (Mon Apr 17)
 
-- We want to have functioning player movement
-- We want functional player interaction
-- Bill's additional artwork compiled into sprite database
-- We want to introduce enemy and other assorted objects into the environment
+- Teammate abandoned project
+- Consulted with Professor McCarthy
+- Bug(s) discovered in Mode-Lambda which slowed development
+- Alternate workaround is possible
+- Project scope changing
+- Switched and incorporated new Lux library
+- Completed many explorations into screen drawing, animating layers, sprites, etc. using racket/gui and Lux
+- Experimental folder contains various code explorations used to create and draw animation using sprites and layers
+- DONE: functioning player movement - rudimentary
+- IN PROGRESS: We want functional player interaction
 
 ### Public Presentation (Mon Apr 24, Wed Apr 26, or Fri Apr 28)
 
@@ -73,16 +79,15 @@ We hope to learn real-world applications of the lessons learned in class.
 - Bill incorporating sound into objects
 - Bill incorporating music into the demo
 
-## Group Responsibilities
-
-### Anthony Voloshin @AnthonyVoloshin (group leader)
-
-- environment
-- player movement
-- environment interaction
+## Responsibilities
 
 ### Bill Bobos @wbobos
 
+- EVERYTHING
+- environment
+- environment interaction
+- player movement
+- player interaction
 - all artwork - backgrounds, player, enemies, effects
 - all sound effects - sound effects, sound processing
 - all music - music, music processing, streaming objects
