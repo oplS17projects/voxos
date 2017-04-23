@@ -15,10 +15,11 @@
 ; sprites and layers
 (define sprite-db (make-sprite-db))
 (add-sprite!/file sprite-db 'player         "../player.png")
+(add-sprite!/file sprite-db 'enemy          "../enemy.png")
 (add-sprite!/file sprite-db 'static-bg      "../static-bg.png")
 (add-sprite!/file sprite-db 'primary-bg     "../primary-bg.png")
 (add-sprite!/file sprite-db 'secondary-bg   "../secondary-bg.png")
-(add-sprite!/file sprite-db 'primary-weapon "../beam-1-7.png")
+(add-sprite!/file sprite-db 'primary-weapon "../main-projectile.png")
 
 ;(add-sprite!/file sprite-db '              "../.png")
 
@@ -27,6 +28,7 @@
 ;(define compiled-db (load-csd "voxos-sprite-db"))
 
 (define player-index         (sprite-idx compiled-db 'player))
+(define enemy-index          (sprite-idx compiled-db 'enemy))
 (define static-bg-index      (sprite-idx compiled-db 'static-bg))
 (define primary-bg-index     (sprite-idx compiled-db 'primary-bg))
 (define secondary-bg-index   (sprite-idx compiled-db 'secondary-bg))
@@ -52,7 +54,8 @@
 (define move-x 0.0)
 (define move-y 0.0)
 (define player-speed 3)
-(define projectile-speed 5)
+(define projectile-speed 10)
+(define enemy-speed -6)
 (define alpha 1.0)
 
 ; screen edge collision boxes
@@ -61,20 +64,21 @@
                        (0 250 640 20)
                        (0 -250 640 20)))
 
-(define player-box   '(0.0 0.0 64 32))
+(define player-box   '(-275.0 0.0 64 32))
 (define beam-box     '())
-(define bullet-boxes '((10.0 0.0 8 8)
-                       (30.0 0.0 8 8)
-                       (50.0 0.0 8 8)
-                       (70.0 0.0 8 8)
-                       (90.0 0.0 8 8)))
-
+(define bullet-boxes '())
+(define enemy-boxes  '((0.0 0.0 16 16)
+                       (30.0 30.0 16 16)
+                       (60.0 60.0 16 16)
+                       (90.0 90.0 16 16)
+                       (120.0 120.0 16 16)))
 
 ; player control input
 (define is-up-input #false)
 (define is-down-input #false)
 (define is-left-input #false)
 (define is-right-input #false)
+(define is-fired-input #false)
 
 ; static sprites dont move
 (define static-bg-sprite (sprite 0.0 0.0 static-bg-index #:layer 0))
@@ -103,47 +107,19 @@
                                    (cadr player-box)
                                    player-index #:layer 3))
      
-;     (define primary-weapon-sprite
-;       (sprite (+ (car player-box) 355)
-;               (cadr player-box)
-;               primary-weapon-index
-;               #:a alpha
-;               #:layer 3))
-
-;     (define primary-weapon-sprite
-;       (sprite (+ (car player-box) 40)
-;               (cadr player-box)
-;               primary-weapon-index
-;               #:a alpha
-;               #:layer 3))
-
-     ; display five bullets onscreen
-     ; have the bullets be drawn based on a list of boxes
-     ; (looks like border boxes list)
-     ; (set! dynamic-sprites (append dynamic-sprites (makeBulletSprites bullet-boxes)))
-
-     ; makeBulletSprites here
-     ; bullet-boxes list - coords for bullets similar to border-boxes
-     (define (make-bullet-sprites projectile-boxes)
-       (cond
-         ((null? projectile-boxes) '())
-         (else          
-          (cons (sprite (car (car projectile-boxes))
-                        (cadr (car projectile-boxes))
-                        primary-weapon-index
-                        #:a alpha
-                        #:layer 3)
-                (make-bullet-sprites (cdr projectile-boxes))))))
-     
-  
+     ; list of all sprites to be drawn
      (define dynamic-sprites (list primary-bg-sprite
                                    secondary-bg-sprite
                                    player-sprite))
 
      ; adds new bullets to dynamic sprites
      (set! dynamic-sprites (append dynamic-sprites
-                                   (make-bullet-sprites bullet-boxes)))
-
+                                   (make-sprites bullet-boxes
+                                                 primary-weapon-index)))
+     ; adds enemies to dynamic sprites
+     (set! dynamic-sprites (append dynamic-sprites
+                                   (make-sprites enemy-boxes
+                                                 enemy-index)))
      
      (rendering-states->draw layer-config static-sprites dynamic-sprites))
 
@@ -153,6 +129,10 @@
      (cond
        ; closes window
        [(eq? e 'close) #f]
+
+       ; display diagnostics - bullet info
+       [(and (key-event? e) (eq? (send e get-key-code) 'escape))
+        (display (length enemy-boxes))]
 
        ; WASD keys - controls player position and speed
        [(and (key-event? e) (eq? (send e get-key-code) #\w))
@@ -182,93 +162,110 @@
        
        ; SPACE key - fires primary weapon
        [(and (key-event? e) (eq? (send e get-key-code) #\space))
-       ; space button appends to bullet boxes
-        (fire-projectile)])
-        ;(set! alpha 1.0)]
+        (if (not is-fired-input)
+            (fire-projectile)
+            '())
+        (set! is-fired-input #true)]
        
-       ;[(and (key-event? e) (eq? (send e get-key-release-code) #\space))
-        ;(set! alpha 0.0)])
+       [(and (key-event? e) (eq? (send e get-key-release-code) #\space))
+       (set! is-fired-input #false)])
 
        (demo))
 
    ; frame animation system
    (define (word-tick w)
-     ;(set! move-x (add1 move-x)) old bg move stuff
+     ; remove off-screen projectiles from list
+     (set! bullet-boxes (filter (lambda (e) (< (car e) 340)) bullet-boxes))
+     ; adjusts positions of bullet-boxes
+     (set! bullet-boxes (move-boxes bullet-boxes projectile-speed))
 
-     ; in tick function bullets must move
-     ; move-projectiles function on bullet-boxes
-     ; need to remove sprite from bullet boxes
-     ; remove via move-projectile function when off-screen
 
-     ; animate bullet alpha
-     ;(cond
-     ;  ((< alpha 1.0) (set! alpha (+ alpha 0.25))))
-     
-     (define (move-projectiles projectile-boxes)
-       (cond
-         ((null? projectile-boxes) '())
-         (else
-          (set! projectile-boxes
-                (cons
-                 '((+ (car projectile-boxes) projectile-speed) ; x
-                   (cadr projectile-boxes)                     ; y
-                   8                                           ; width
-                   8)                                          ; height
-                 (move-projectiles (cdr projectile-boxes)))))))
-       
-       ; remove off-screen projectiles
-      ; (if (> (caadr projectile-boxes)) 350); grab x value from next bullet
-      ;     (cons (car projectile-boxes)
-      ;           cddr projectile-boxes)
-       ;    '()) ; del the next bullet
 
-     
-     (move-projectiles bullet-boxes)
+     ; generate enemies
+     (set! enemy-boxes (cons (list 340.0
+                                   (- (random 480) 240.0)
+                                   32
+                                   32)
+                             enemy-boxes))
      
 
-       ; player model animation
-       (if is-right-input
-           (begin
-             (move-player-right)
-             (if (border-collision)
-                 (move-player-left)
-                 '()))
-           '())
+; enemy freq var
+; tick counter
+; counter reaches freq gen enemy, then reset counter     
+     
+     ; removes off-screen enemies
+     (set! enemy-boxes (filter (lambda (e) (> (car e) -340)) enemy-boxes))
+     ; adjusts positions of enemy-boxes
+     (set! enemy-boxes (move-boxes enemy-boxes enemy-speed))
 
-       (if is-left-input
-           (begin
-             (move-player-left)
-             (if (border-collision)
-                 (move-player-right)
-                 '()))
-           '())
+     ; player model animation
+     (if is-right-input
+         (begin
+           (move-player-right)
+           (if (border-collision)
+               (move-player-left)
+               '()))
+         '())
 
-       (if is-up-input
-           (begin
-             (move-player-up)
-             (if (border-collision)
-                 (move-player-down)
-                 '()))
-           '())
+     (if is-left-input
+         (begin
+           (move-player-left)
+           (if (border-collision)
+               (move-player-right)
+               '()))
+         '())
 
-       (if is-down-input
-           (begin
-             (move-player-down)
-             (if (border-collision)
-                 (move-player-up)
-                 '()))
-           '())
+     (if is-up-input
+         (begin
+           (move-player-up)
+           (if (border-collision)
+               (move-player-down)
+               '()))
+         '())
+
+     (if is-down-input
+         (begin
+           (move-player-down)
+           (if (border-collision)
+               (move-player-up)
+               '()))
+         '())
 
      
      
-       w)])
+     w)])
 
+; move hit boxes of sprites by adjusting their x-values in the list
+(define (move-boxes boxes speed)
+  (cond
+    ((null? boxes) '())
+    (else
 
+     (cons (list (+ (car (car boxes)) speed) ; x
+                 (cadr   (car boxes))        ; y
+                 (caddr  (car boxes))        ; width
+                 (cadddr (car boxes)))       ; height
+           (move-boxes (cdr boxes) speed)))))
+
+; creates a list of sprites
+(define (make-sprites boxes sprite-index)
+  (cond
+    ((null? boxes) '())
+    (else          
+     (cons (sprite (car (car boxes))
+                   (cadr (car boxes))
+                   sprite-index
+                   #:a alpha
+                   #:layer 3)
+           (make-sprites (cdr boxes) sprite-index)))))
 
 ; adds projectiles to bullet-boxes list
 (define (fire-projectile)
-  (cons '(40.0 0.0 8 8) bullet-boxes))
-
+  (set! bullet-boxes (cons (list (+ (car player-box) 25)
+                                 (cadr player-box)
+                                 8
+                                 8)
+                           bullet-boxes)))
 
 
 ; player movement
