@@ -55,7 +55,9 @@
 (define move-y 0.0)
 (define player-speed 3)
 (define projectile-speed 10)
-(define enemy-speed -6)
+(define enemy-speed -5)
+(define tick-counter 0)
+(define enemy-frequency 20)
 (define alpha 1.0)
 
 ; screen edge collision boxes
@@ -67,16 +69,12 @@
 (define player-box   '(-275.0 0.0 64 32))
 (define beam-box     '())
 (define bullet-boxes '())
-(define enemy-boxes  '((0.0 0.0 16 16)
-                       (30.0 30.0 16 16)
-                       (60.0 60.0 16 16)
-                       (90.0 90.0 16 16)
-                       (120.0 120.0 16 16)))
+(define enemy-boxes  '())
 
 ; player control input
-(define is-up-input #false)
-(define is-down-input #false)
-(define is-left-input #false)
+(define is-up-input    #false)
+(define is-down-input  #false)
+(define is-left-input  #false)
 (define is-right-input #false)
 (define is-fired-input #false)
 
@@ -132,7 +130,8 @@
 
        ; display diagnostics - bullet info
        [(and (key-event? e) (eq? (send e get-key-code) 'escape))
-        (display (length enemy-boxes))]
+        ;(display (length enemy-boxes))]
+        (display tick-counter)]
 
        ; WASD keys - controls player position and speed
        [(and (key-event? e) (eq? (send e get-key-code) #\w))
@@ -180,18 +179,32 @@
      (set! bullet-boxes (move-boxes bullet-boxes projectile-speed))
 
 
-
-     ; generate enemies
-     (set! enemy-boxes (cons (list 340.0
-                                   (- (random 480) 240.0)
-                                   32
-                                   32)
-                             enemy-boxes))
+     
      
 
-; enemy freq var
-; tick counter
-; counter reaches freq gen enemy, then reset counter     
+     ; enemy freq var
+     ; tick counter
+     ; counter reaches freq gen enemy, then reset counter     
+     (cond
+       ((>= tick-counter enemy-frequency)
+        (set! tick-counter 0)
+        (set! enemy-frequency 0)
+        ; generate enemies
+        (set! enemy-boxes (cons (list 340.0
+                                      (- (random 480) 240.0)
+                                      32
+                                      32)
+                                enemy-boxes))
+        (set! enemy-frequency (+ (random 60) 15))
+        (display "\n enemy frequency ")
+        (display enemy-frequency))
+        ;(display tick-counter))
+       (else
+        (set! tick-counter (+ tick-counter 1))
+        (display "\n tick counter ")
+        (display tick-counter)))
+
+
      
      ; removes off-screen enemies
      (set! enemy-boxes (filter (lambda (e) (> (car e) -340)) enemy-boxes))
