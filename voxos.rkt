@@ -12,6 +12,10 @@
 ; define background music track
 (define power-core                (rs-read "./sound/power-core.wav"))
 (define main-weapon               (rs-read "./sound/main-weapon.wav"))
+(define enemy-explosion           (rs-read "./sound/enemy-explosion.wav"))
+(define player-explosion          (rs-read "./sound/player-explosion.wav"))
+(define small-explosion           (rs-read "./sound/small-explosion.wav"))
+(define medium-explosion          (rs-read "./sound/medium-explosion.wav"))
 
 ; resolution
 (define canvas-size-x          640) ; width
@@ -27,9 +31,11 @@
 (add-sprite!/file sprite-db       'main-bg        "./sprites/main-bg.png")
 (add-sprite!/file sprite-db       'secondary-bg   "./sprites/secondary-bg.png")
 (add-sprite!/file sprite-db       'main-weapon    "./sprites/main-weapon.png")
-(add-sprite!/file sprite-db       'enemy-weapon   "./sprites/main-weapon.png")
+(add-sprite!/file sprite-db       'enemy-weapon   "./sprites/enemy-weapon.png")
 (add-sprite!/file sprite-db       'game-over      "./sprites/game-over.png")
-;(add-sprite!/file sprite-db       'enemy-weapon    "./sprites/enemy-weapon.png")
+(add-sprite!/file sprite-db       'explosion-1    "./sprites/explosion-1.png")
+(add-sprite!/file sprite-db       'explosion-2    "./sprites/explosion-2.png")
+(add-sprite!/file sprite-db       'explosion-3    "./sprites/explosion-3.png")
 
 ; compile sprite database
 (define compiled-db               (compile-sprite-db sprite-db))
@@ -45,6 +51,9 @@
 (define main-weapon-index         (sprite-idx compiled-db 'main-weapon))
 (define enemy-weapon-index        (sprite-idx compiled-db 'enemy-weapon))
 (define game-over-index           (sprite-idx compiled-db 'game-over))
+(define explosion-1-index         (sprite-idx compiled-db 'explosion-1))
+(define explosion-2-index         (sprite-idx compiled-db 'explosion-2))
+(define explosion-3-index         (sprite-idx compiled-db 'explosion-3))
 
 ; game layers - sprites are placed onto layers
 (define static-bg-layer             ; static bg layer
@@ -89,6 +98,7 @@
 (define bullet-boxes           '()) ; projectile hit-boxes
 (define enemy-bullet-boxes     '()) ; enemy projectile hit-boxes
 (define enemy-boxes            '()) ; enemy hit-boxes
+(define explosion-boxes        '()) ; explosion hit-boxes
 
 ; player control input toggles
 (define is-up-input         #false) ; up
@@ -129,8 +139,9 @@
       shield-strength
       player-score))
 
-  ; WORD-OUTPUT
-  ; draws environment
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   ; WORD-OUTPUT
+   ; draws environment
    (define (word-output w)
      (match-define (demo) w)
 
@@ -176,11 +187,14 @@
                                    tile-secondary-bg-sprite))
 
      ; draws player if alive
-     (if is-player-alive
+     (cond
+       (is-player-alive
          (set! dynamic-sprites (cons player-sprite
-                                     dynamic-sprites))
-         (set! dynamic-sprites (cons game-over-sprite
                                      dynamic-sprites)))
+       (else
+        (set! player-box         '(-275.0 500.0 64 32)) ; move player off-screen
+        (set! dynamic-sprites (cons game-over-sprite
+                                     dynamic-sprites))))
 
      ; adds new player bullets to dynamic sprites
      (set! dynamic-sprites (append dynamic-sprites
@@ -196,9 +210,13 @@
                                    (make-sprites enemy-boxes
                                                  enemy-index)))
 
+     ; adds explosions to dynamic sprites
+     (set! dynamic-sprites (append dynamic-sprites
+                                   (make-explosion-sprites explosion-boxes)))
      ; draws everything
      (rendering-states->draw layer-config static-sprites dynamic-sprites))
 
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ; WORD-EVENT
    ; captures key events
    (define (word-event w e)
@@ -213,13 +231,14 @@
        ; ESC key
        ; respawns and resets player
        [(and (key-event? e) (eq? (send e get-key-code) 'escape))
-        (set! is-player-alive #true)
-        (set! player-box      '(-275.0 0.0 64 32))
-        (set! bullet-boxes '())
-        (set! enemy-boxes '())
+        (set! is-player-alive    #true)
+        (set! player-box         '(-275.0 0.0 64 32))
+        (set! bullet-boxes       '())
+        (set! enemy-boxes        '())
         (set! enemy-bullet-boxes '())
-        (set! player-score 0)
-        (set! shield-strength 100)]
+        (set! explosion-boxes    '())
+        (set! player-score         0)
+        (set! shield-strength    100)]
 
        ; W A S D keys - controls player
        ; W / up arrow key - up
@@ -283,10 +302,15 @@
      
      (demo))
 
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ; WORD-TICK
    ; tick based frame animation system
    (define (word-tick w)
 
+     ; animates explosions-boxes
+     (set! explosion-boxes
+           (move-explosion-boxes explosion-boxes))
+     
      ; move main background
      (cond
        ((<= main-bg-x -640)
@@ -362,26 +386,34 @@
      ; updated enemy count
      (set! temp-enemy-count (- temp-enemy-count (length enemy-boxes)))
 
-     ; update shield strength
+     ; update shield strength when hit by enemies
      (set! shield-strength (- shield-strength (* temp-enemy-count 5)))
 
-
+     ; end game when shield strength is 0
      (cond
        ((<= shield-strength 0)
          (set! is-player-alive #false)
          (set! shield-strength 0)))
      
-     
      ; moves enemy-boxes
      (set! enemy-boxes (move-boxes enemy-boxes enemy-speed))
 
      ; collision detection between player and enemies / enemy bullets
-     (if (or (box-to-list-collision player-box enemy-boxes)
+     (cond
+       ((or (box-to-list-collision player-box enemy-boxes)
              (box-to-list-collision player-box enemy-bullet-boxes))
-         (set! is-player-alive #false)
-         '())
+        (set! explosion-boxes (cons (list (car    player-box) ; x
+                                          (cadr   player-box) ; y
+                                          (caddr  player-box) ; width
+                                          (cadddr player-box) ; height
+                                          0)                  ; tick
+                                    explosion-boxes))
+        (play small-explosion)                                ; play sound
+        (play player-explosion)                               ; play sound
+        (set! is-player-alive #false)))
 
      ; player model animation
+     ; move right
      (if (and is-right-input is-player-alive)
          (begin
            (move-player-right)
@@ -389,7 +421,7 @@
                (move-player-left)
                '()))
          '())
-
+     ; move left
      (if (and is-left-input is-player-alive)
          (begin
            (move-player-left)
@@ -397,7 +429,7 @@
                (move-player-right)
                '()))
          '())
-
+     ; move up
      (if (and is-up-input is-player-alive)
          (begin
            (move-player-up)
@@ -405,7 +437,7 @@
                (move-player-down)
                '()))
          '())
-
+     ; move down
      (if (and is-down-input is-player-alive)
          (begin
            (move-player-down)
@@ -413,10 +445,28 @@
                (move-player-up)
                '()))
          '())
-
-     
-     
+     ; return word
      w)])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FUNCTIONS
+; called by word-tick / word-event / word-output
+
+; animates explosions by modifying tick parameter
+(define (move-explosion-boxes explosions)
+  (cond
+    ((null? explosions)
+     '())
+    ((<= (cadddr (cdr (car explosions))) 15)
+     (cons (list (car    (car explosions))              ; x
+                 (cadr   (car explosions))              ; y
+                 (caddr  (car explosions))              ; width
+                 (cadddr (car explosions))              ; height
+                 (+ (cadddr (cdr (car explosions))) 1)) ; update tick
+           (move-explosion-boxes (cdr explosions))))
+    (else
+     (set! explosion-boxes (remove (car explosion-boxes) explosion-boxes))
+     (move-explosion-boxes (cdr explosions)))))
 
 ; move hit boxes of sprites by adjusting their x-values in the list
 (define (move-boxes boxes speed)
@@ -428,6 +478,27 @@
                  (caddr  (car boxes))        ; width
                  (cadddr (car boxes)))       ; height
            (move-boxes (cdr boxes) speed)))))
+
+; creates a list of animated explosion sprites
+(define (make-explosion-sprites boxes)
+  (cond
+    ((null? boxes) '())
+    (else          
+     (cons (sprite (car (car boxes))
+                   (cadr (car boxes))
+                   ; determine which sprite to use based on the tick
+                   ; parameter stored in the sub-list
+                   (cond
+                     ((<= (cadddr (cdr (car boxes))) 5)
+                      explosion-1-index)     ; explosion frame 1
+                     ((<= (cadddr (cdr (car boxes))) 10)
+                      explosion-2-index)     ; explosion frame 2
+                     (else
+                      explosion-3-index))    ; explosion frame 3
+                   ; end sprite index selection
+                   #:a alpha
+                   #:layer 3)
+           (make-explosion-sprites (cdr boxes))))))
 
 ; creates a list of sprites
 (define (make-sprites boxes sprite-index)
@@ -448,20 +519,21 @@
                                  8
                                  8)
                            bullet-boxes))
-  (play main-weapon))
+  (play main-weapon)) ; play main-weapon sound
 
 ; player movement
+; move right
 (define (move-player-right)
   (set! player-box (cons (+ (car player-box) player-speed) (cdr player-box))))
-
+; move left
 (define (move-player-left)
   (set! player-box (cons (- (car player-box) player-speed) (cdr player-box))))
-
+; move up
 (define (move-player-up)
   (set! player-box (cons (car player-box)
                          (cons (- (cadr player-box) player-speed)
                                (cddr player-box)))))
-
+; move down
 (define (move-player-down)
   (set! player-box (cons (car player-box)
                          (cons (+ (cadr player-box) player-speed)
@@ -509,10 +581,19 @@
     ((not (box-to-box-collision enemy (car projectiles)))
      (enemy-projectile-removal enemy (cdr projectiles)))
     (else
+     ; collision detected between enemy and projectile
      ; remove bullet/enemy from list
-     (set! player-score (+ player-score 100))
-     (set! enemy-boxes  (remove enemy enemy-boxes))
-     (set! bullet-boxes (remove (car projectiles) bullet-boxes))
+     ; add explosion animation
+     (set! explosion-boxes (cons (list (car    enemy) ; x
+                                       (cadr   enemy) ; y
+                                       (caddr  enemy) ; width
+                                       (cadddr enemy) ; height
+                                       0)             ; tick
+                                 explosion-boxes))
+     (play enemy-explosion)                                      ; play sound
+     (set! player-score (+ player-score 100))                    ; update score
+     (set! enemy-boxes  (remove enemy enemy-boxes))              ; remove enemy
+     (set! bullet-boxes (remove (car projectiles) bullet-boxes)) ; remove bullet
      (enemy-projectile-removal enemy (cdr projectiles)))))
 
 ; background music looping function
