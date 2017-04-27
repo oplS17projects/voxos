@@ -9,34 +9,52 @@
          mode-lambda/backend/gl
          rsound)
 
-; define background music track
-(define power-core                (rs-read "./sound/power-core.wav"))
-(define main-weapon               (rs-read "./sound/main-weapon.wav"))
-(define enemy-explosion           (rs-read "./sound/enemy-explosion.wav"))
-(define player-explosion          (rs-read "./sound/player-explosion.wav"))
-(define small-explosion           (rs-read "./sound/small-explosion.wav"))
-(define medium-explosion          (rs-read "./sound/medium-explosion.wav"))
+; sound
+(define power-core                (rs-read "./sound/power-core.wav"       ))
+(define main-weapon               (rs-read "./sound/main-weapon.wav"      ))
+(define missile-weapon            (rs-read "./sound/missile-weapon.wav"   ))
+(define wave-weapon               (rs-read "./sound/wave-weapon.wav"      ))
+(define beam-weapon               (rs-read "./sound/beam-weapon.wav"      ))
+(define main-power-up             (rs-read "./sound/main-power-up.wav"    ))
+(define missile-power-up          (rs-read "./sound/missile-power-up.wav" ))
+(define wave-power-up             (rs-read "./sound/wave-power-up.wav"    ))
+(define beam-power-up             (rs-read "./sound/beam-power-up.wav"    ))
+(define shield-power-up           (rs-read "./sound/shield-power-up.wav"  ))
+(define enemy-explosion           (rs-read "./sound/enemy-explosion.wav"  ))
+(define player-explosion          (rs-read "./sound/player-explosion.wav" ))
+(define small-explosion           (rs-read "./sound/small-explosion.wav"  ))
+(define medium-explosion          (rs-read "./sound/medium-explosion.wav" ))
 (define shield-enemy-kill         (rs-read "./sound/shield-enemy-kill.wav"))
+
 ; resolution
-(define canvas-size-x          640) ; width
-(define canvas-size-y          480) ; height
+(define canvas-size-x          640)
+(define canvas-size-y          480)
 
 ; create sprite database
-(define sprite-db                 (make-sprite-db))
+(define sprite-db (make-sprite-db))
 
 ; add sprites to database
-(add-sprite!/file sprite-db       'player         "./sprites/player.png")
-(add-sprite!/file sprite-db       'earth          "./sprites/earth.png")
-(add-sprite!/file sprite-db       'enemy          "./sprites/enemy.png")
-(add-sprite!/file sprite-db       'static-bg      "./sprites/static-bg.png")
-(add-sprite!/file sprite-db       'main-bg        "./sprites/main-bg.png")
-(add-sprite!/file sprite-db       'secondary-bg   "./sprites/secondary-bg.png")
-(add-sprite!/file sprite-db       'main-weapon    "./sprites/main-weapon.png")
-(add-sprite!/file sprite-db       'enemy-weapon   "./sprites/enemy-weapon.png")
-(add-sprite!/file sprite-db       'game-over      "./sprites/game-over.png")
-(add-sprite!/file sprite-db       'explosion-1    "./sprites/explosion-1.png")
-(add-sprite!/file sprite-db       'explosion-2    "./sprites/explosion-2.png")
-(add-sprite!/file sprite-db       'explosion-3    "./sprites/explosion-3.png")
+(add-sprite!/file sprite-db  'player           "./sprites/player.png"          )
+(add-sprite!/file sprite-db  'earth            "./sprites/earth.png"           )
+(add-sprite!/file sprite-db  'enemy            "./sprites/enemy.png"           )
+(add-sprite!/file sprite-db  'static-bg        "./sprites/static-bg.png"       )
+(add-sprite!/file sprite-db  'main-bg          "./sprites/main-bg.png"         )
+(add-sprite!/file sprite-db  'secondary-bg     "./sprites/secondary-bg.png"    )
+(add-sprite!/file sprite-db  'main-weapon      "./sprites/main-weapon.png"     )
+(add-sprite!/file sprite-db  'missile-weapon   "./sprites/missile-weapon.png"  )
+(add-sprite!/file sprite-db  'wave-weapon      "./sprites/wave-weapon.png"     )
+(add-sprite!/file sprite-db  'beam-weapon      "./sprites/beam-weapon.png"     )
+(add-sprite!/file sprite-db  'enemy-weapon     "./sprites/enemy-weapon.png"    )
+(add-sprite!/file sprite-db  'game-over        "./sprites/game-over.png"       )
+(add-sprite!/file sprite-db  'explosion-1      "./sprites/explosion-1.png"     )
+(add-sprite!/file sprite-db  'explosion-2      "./sprites/explosion-2.png"     )
+(add-sprite!/file sprite-db  'explosion-3      "./sprites/explosion-3.png"     )
+(add-sprite!/file sprite-db  'main-power-up    "./sprites/main-power-up.png"   )
+(add-sprite!/file sprite-db  'wave-power-up    "./sprites/wave-power-up.png"   )
+(add-sprite!/file sprite-db  'beam-power-up    "./sprites/beam-power-up.png"   )
+(add-sprite!/file sprite-db  'shield-power-up  "./sprites/shield-power-up.png" )
+(add-sprite!/file sprite-db  'missile-power-up "./sprites/missile-power-up.png")
+
 
 ; compile sprite database
 (define compiled-db               (compile-sprite-db sprite-db))
@@ -44,30 +62,33 @@
 ;(define compiled-db              (load-csd "voxos-sprite-db"))
 
 ; sprite index
-(define player-index              (sprite-idx compiled-db 'player))
-(define earth-index               (sprite-idx compiled-db 'earth))
-(define enemy-index               (sprite-idx compiled-db 'enemy))
-(define static-bg-index           (sprite-idx compiled-db 'static-bg))
-(define main-bg-index             (sprite-idx compiled-db 'main-bg))
-(define secondary-bg-index        (sprite-idx compiled-db 'secondary-bg))
-(define main-weapon-index         (sprite-idx compiled-db 'main-weapon))
-(define enemy-weapon-index        (sprite-idx compiled-db 'enemy-weapon))
-(define game-over-index           (sprite-idx compiled-db 'game-over))
-(define explosion-1-index         (sprite-idx compiled-db 'explosion-1))
-(define explosion-2-index         (sprite-idx compiled-db 'explosion-2))
-(define explosion-3-index         (sprite-idx compiled-db 'explosion-3))
+(define player-index              (sprite-idx compiled-db 'player        ))
+(define earth-index               (sprite-idx compiled-db 'earth         ))
+(define enemy-index               (sprite-idx compiled-db 'enemy         ))
+(define static-bg-index           (sprite-idx compiled-db 'static-bg     ))
+(define main-bg-index             (sprite-idx compiled-db 'main-bg       ))
+(define secondary-bg-index        (sprite-idx compiled-db 'secondary-bg  ))
+(define main-weapon-index         (sprite-idx compiled-db 'main-weapon   ))
+(define missile-weapon-index      (sprite-idx compiled-db 'missile-weapon))
+(define wave-weapon-index         (sprite-idx compiled-db 'wave-weapon   ))
+(define beam-weapon-index         (sprite-idx compiled-db 'beam-weapon   ))
+(define enemy-weapon-index        (sprite-idx compiled-db 'enemy-weapon  ))
+(define game-over-index           (sprite-idx compiled-db 'game-over     ))
+(define explosion-1-index         (sprite-idx compiled-db 'explosion-1   ))
+(define explosion-2-index         (sprite-idx compiled-db 'explosion-2   ))
+(define explosion-3-index         (sprite-idx compiled-db 'explosion-3   ))
 
-; game layers - sprites are placed onto layers
-(define static-bg-layer             ; static bg layer
+; layers - sprites are placed onto layers
+(define static-bg-layer           ; static   bg layer
        (layer (* 1.0 canvas-size-x)
             (* 1.0 canvas-size-y)))
-(define main-bg-layer               ; parallax bg layer
+(define main-bg-layer             ; parallax bg layer
        (layer (* 1.0 canvas-size-x)
             (* 1.0 canvas-size-y)))
-(define secondary-bg-layer          ; parallax bg layer
+(define secondary-bg-layer        ; parallax bg layer
        (layer (* 1.0 canvas-size-x)
             (* 1.0 canvas-size-y)))
-(define action-layer                ; action layer
+(define action-layer              ; action   bg layer
        (layer (* 1.0 canvas-size-x)
             (* 1.0 canvas-size-y)))
 
@@ -76,32 +97,38 @@
   (vector static-bg-layer main-bg-layer secondary-bg-layer action-layer))
 
 ; state variables
-(define is-player-alive      #true) ; player state
-(define player-speed             3) ; player movement speed
-(define projectile-speed        10) ; projectile movement speed
-(define enemy-projectile-speed  -5) ; enemy projectile movement speed
-(define enemy-speed             -2) ; enemy movement speed
-(define tick-counter             0) ; tick counter
-(define enemy-frequency         15) ; enemy creation frequency
-(define alpha                  1.0) ; transparency amount
-(define shield-strength        100) ; shield strength
-(define player-score             0) ; player score
-(define shield-location       -300) ; shield x-axis location
+(define is-player-alive      #true) ; player  state
+(define is-main-weapon       #true) ; main    weapon
+(define is-missile-weapon   #false) ; missile weapon
+(define is-wave-weapon      #false) ; wave    weapon
+(define is-beam-weapon      #false) ; beam    weapon
+(define alpha                  1.0) ; alpha   amount
+(define random-enemy         'main) ; enemy   choice
+(define tick-counter             0) ; tick    counter
+(define shield-cap             125) ; max     shield strength
+(define enemy-frequency         15) ; enemy   creation frequency
+(define player-speed             3) ; player       speed
+(define projectile-speed        10) ; projectile   speed
+(define enemy-bullet-speed      -5) ; enemy bullet speed
+(define enemy-speed             -2) ; enemy        speed
+(define shield-strength        100) ; shield       strength
+(define player-score             0) ; player       score
+(define shield-location       -300) ; shield       x-axis location
 
 ; screen edge collision boxes
 (define border-boxes
-                   '((330 0 20 480) ; right screen edge hit box
-                    (-330 0 20 480) ; left screen edge hit box
-                     (0 250 640 20) ; top screen edge hit box
+                   '((330 0 20 480) ; right  screen edge hit box
+                    (-330 0 20 480) ; left   screen edge hit box
+                     (0 250 640 20) ; top    screen edge hit box
                   (0 -250 640 20))) ; bottom screen edge hit box
 ; misc hit boxes
 (define player-box
-               '(-275.0 0.0 64 32)) ; starting position
-(define beam-box               '()) ; laser weapon
-(define bullet-boxes           '()) ; projectile hit-boxes
-(define enemy-bullet-boxes     '()) ; enemy projectile hit-boxes
-(define enemy-boxes            '()) ; enemy hit-boxes
-(define explosion-boxes        '()) ; explosion hit-boxes
+               '(-275.0 0.0 64 32)) ; starting     position
+(define bullet-boxes           '()) ; bullet       hit-boxes
+(define enemy-bullet-boxes     '()) ; enemy bullet hit-boxes
+(define enemy-boxes            '()) ; enemy        hit-boxes
+(define explosion-boxes        '()) ; explosion    hit-boxes
+(define power-up-boxes         '()) ; power-up     hit-boxes
 
 ; player control input toggles
 (define is-up-input         #false) ; up
@@ -138,7 +165,7 @@
 
    (define (word-label s ft)
      (format
-      "Voxos:    Shield Strength: ~a%    -    SCORE: ~a"
+      "Voxos:    SHIELD STRENGTH:  ~a%    -    SCORE: ~a"
       shield-strength
       player-score))
 
@@ -155,7 +182,7 @@
                main-bg-y
                main-bg-index
                #:layer 1))
-     (define tile-main-bg-sprite      ; main bg - tile sprite
+     (define tile-main-bg-sprite      ; main bg      - tile sprite
        (sprite tile-main-bg-x
                tile-main-bg-y
                main-bg-index
@@ -201,25 +228,22 @@
        (else
         (set! player-box      '(-275.0 500.0 64 32))  ; move player off-screen
         (set! dynamic-sprites  (cons game-over-sprite ; display game-over screen
-                                     dynamic-sprites))))
+                                      dynamic-sprites))))
 
      ; draws earth
-     (set! dynamic-sprites (cons earth-sprite
-                                 dynamic-sprites))
+     (set! dynamic-sprites     (cons earth-sprite
+                                      dynamic-sprites))
      
      ; adds new player bullets to dynamic sprites
      (set! dynamic-sprites     (append dynamic-sprites
-                                       (make-sprites bullet-boxes
-                                                     main-weapon-index)))
+                                       (make-sprites bullet-boxes)))
 
      ; adds new enemy bullets to dynamic sprites
      (set! dynamic-sprites     (append dynamic-sprites
-                                   (make-sprites enemy-bullet-boxes
-                                                 enemy-weapon-index)))
+                                       (make-sprites enemy-bullet-boxes)))
      ; adds enemies to dynamic sprites
      (set! dynamic-sprites     (append dynamic-sprites
-                                   (make-sprites enemy-boxes
-                                                 enemy-index)))
+                                       (make-sprites enemy-boxes)))
 
      ; adds explosions to dynamic sprites
      (set! dynamic-sprites     (append dynamic-sprites
@@ -239,7 +263,7 @@
      (cond
        ; closes window / stops music
        [(eq? e 'close)
-        (stop) ; stops background music track
+        (stop) ; stops music
         #f]
 
        ; ESC key
@@ -251,68 +275,91 @@
         (set! enemy-boxes        '())
         (set! enemy-bullet-boxes '())
         (set! explosion-boxes    '())
+        (set! power-up-boxes     '())
         (set! player-score         0)
         (set! shield-strength    100)]
 
        ; W A S D keys - controls player
-       ; W / up arrow key - up
+       ; W / UP arrow key - up
        [(and (key-event? e) (eq? (send e get-key-code) #\w))
         (set! is-up-input #true)]     ; W pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) #\w))
         (set! is-up-input #false)]    ; W released
        [(and (key-event? e) (eq? (send e get-key-code) 'up))
-        (set! is-up-input #true)]     ; up pressed
+        (set! is-up-input #true)]     ; UP pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) 'up))
-        (set! is-up-input #false)]    ; up released
+        (set! is-up-input #false)]    ; UP released
 
-       ; A / left arrow key - left
+       ; A / LEFT arrow key - left
        [(and (key-event? e) (eq? (send e get-key-code) #\a))
         (set! is-left-input #true)]   ; A pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) #\a))
         (set! is-left-input #false)]  ; A released
        [(and (key-event? e) (eq? (send e get-key-code) 'left))
-        (set! is-left-input #true)]     ; left pressed
+        (set! is-left-input #true)]   ; LEFT pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) 'left))
-        (set! is-left-input #false)]    ; left released
+        (set! is-left-input #false)]  ; LEFT released
        
-       ; S / down arrow key - down
+       ; S / DOWN arrow key - down
        [(and (key-event? e) (eq? (send e get-key-code) #\s))
         (set! is-down-input #true)]   ; S pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) #\s))
         (set! is-down-input #false)]  ; S released
        [(and (key-event? e) (eq? (send e get-key-code) 'down))
-        (set! is-down-input #true)]     ; down pressed
+        (set! is-down-input #true)]   ; DOWN pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) 'down))
-        (set! is-down-input #false)]    ; down released
+        (set! is-down-input #false)]  ; DOWN released
 
-       ; D / right arrow key - right
+       ; D / RIGHT arrow key - right
        [(and (key-event? e) (eq? (send e get-key-code) #\d))
         (set! is-right-input #true)]  ; D pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) #\d))
         (set! is-right-input #false)] ; D released
        [(and (key-event? e) (eq? (send e get-key-code) 'right))
-        (set! is-right-input #true)]     ; right pressed
+        (set! is-right-input #true)]  ; RIGHT pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) 'right))
-        (set! is-right-input #false)]    ; right released       
+        (set! is-right-input #false)] ; RIGHT released       
        
-       ; SPACE / CTRL key - fires main weapon
+       ; SPACE / CTRL key - fires weapon
        [(and (key-event? e) (eq? (send e get-key-code) #\space))
-        (if (and (not is-fired-input) is-player-alive)
-            (fire-projectile)
-            '())
-        (set! is-fired-input #true)]   ; SPACE pressed
-       
+        ; SPACE pressed        
+        (cond
+          ; main weapon
+          ((and (not is-fired-input) is-main-weapon is-player-alive)
+           (fire-projectile main-weapon 8 8))
+          ; wave weapon
+          ((and (not is-fired-input) is-wave-weapon is-player-alive)
+           (fire-projectile wave-weapon 8 16))
+          ; missile weapon
+          ((and (not is-fired-input) is-missile-weapon is-player-alive)
+           (fire-projectile missile-weapon 16 8))
+          ; beam weapon
+          ((and (not is-fired-input) is-beam-weapon is-player-alive)
+           (fire-projectile beam-weapon 640 8)))
+        (set! is-fired-input #true)]
+       ; SPACE released
        [(and (key-event? e) (eq? (send e get-key-release-code) #\space))
         (set! is-fired-input #false)]
 
        [(and (key-event? e) (eq? (send e get-key-code) 'rcontrol))
-        (if (and (not is-fired-input) is-player-alive)
-            (fire-projectile)
-            '())
-        (set! is-fired-input #true)]   ; CTRL pressed
-       
+        ; CTRL pressed        
+        (cond
+          ; main weapon
+          ((and (not is-fired-input) is-main-weapon is-player-alive)
+           (fire-projectile main-weapon 8 8))
+          ; wave weapon
+          ((and (not is-fired-input) is-wave-weapon is-player-alive)
+           (fire-projectile wave-weapon 8 16))
+          ; missile weapon
+          ((and (not is-fired-input) is-missile-weapon is-player-alive)
+           (fire-projectile missile-weapon 16 8))
+          ; beam weapon
+          ((and (not is-fired-input) is-beam-weapon is-player-alive)
+           (fire-projectile beam-weapon 640 8)))
+        (set! is-fired-input #true)]
+       ; CTRL released
        [(and (key-event? e) (eq? (send e get-key-release-code) 'rcontrol))
-        (set! is-fired-input #false)]) ; CTRL released
+        (set! is-fired-input #false)])
      
      (demo))
 
@@ -334,7 +381,6 @@
        (else
         (set! main-bg-x (- main-bg-x main-bg-speed))
         (set! tile-main-bg-x (- tile-main-bg-x main-bg-speed))))
-
      ; move secondary background
      (cond
        ((<= secondary-bg-x -640)
@@ -354,37 +400,32 @@
      ; moves player bullet-boxes
      (set! bullet-boxes
            (move-boxes bullet-boxes projectile-speed))
-
      ; moves enemy bullet-boxes
      (set! enemy-bullet-boxes
-           (move-boxes enemy-bullet-boxes enemy-projectile-speed))
+           (move-boxes enemy-bullet-boxes enemy-bullet-speed))
      
      ; enemy frequency - utilizes a tick counter
      (cond
        ((>= tick-counter enemy-frequency)
         (set! tick-counter 0)
+
+        ; randomly selects an enemy from a list of enemies
+        (set! random-enemy
+              (list-ref enemy-list (- (random (length enemy-list)) 1)))
+
         ; generate enemies
-        (set! enemy-boxes (cons (list 340.0
-                                      (- (random 448) 224.0)
-                                      32
-                                      32)
+        (set! enemy-boxes (cons (list 340.0                  ; x location
+                                      (- (random 448) 224.0) ; y location
+                                      32                     ; hit-box width
+                                      32                     ; hit-box height
+                                      random-enemy)          ; enemy sprite
                                 enemy-boxes))
+
+        ; difficulty setting - enemy spawn frequency
         (set! enemy-frequency
               (+ (random (max 1 (- 100 (floor (/ player-score 70))))) 5)))
        (else
         (set! tick-counter (+ tick-counter 1))))
-
-     ; enemy projectile frequency
-     (define (make-enemy-bullets enemies)
-       (cond
-         ((null? enemies)
-          '())
-         ((< (random 1000) 7)
-          (set! enemy-bullet-boxes
-                (cons (list (car (car enemies)) (cadr (car enemies)) 8 8)
-                      enemy-bullet-boxes))
-          (make-enemy-bullets (cdr enemies)))
-         (else (make-enemy-bullets (cdr enemies)))))
 
      ; create enemy bullets based on enemy boxes
      (make-enemy-bullets enemy-boxes)
@@ -398,21 +439,6 @@
      ; handles shield / shield-killed enemies
      (set! enemy-boxes (shield-kill enemy-boxes))
 
-     ; removes off-screen enemies
-     ;(set! enemy-boxes (filter (lambda (e) (> (car e) -340)) enemy-boxes))
-
-     ; updated enemy count - number of enemies that damaged shield
-     ;(set! temp-enemy-count (- temp-enemy-count (length enemy-boxes)))
-
-     ; update shield strength when hit by enemies
-     ;(set! shield-strength (- shield-strength (* temp-enemy-count 5)))
-
-     ; end game when earth is hit - shield strength is 0
-;     (cond
-;       ((< shield-strength 0)
-;         (set! is-player-alive #false)
-;         (set! shield-strength 0)))
-     
      ; moves enemy-boxes
      (set! enemy-boxes (move-boxes enemy-boxes enemy-speed))
 
@@ -422,13 +448,59 @@
              (box-to-list-collision player-box enemy-bullet-boxes))
         (set! explosion-boxes (cons (list (car    player-box) ; x
                                           (cadr   player-box) ; y
-                                          (caddr  player-box) ; width
-                                          (cadddr player-box) ; height
+                                          (caddr  player-box) ; hit box width
+                                          (cadddr player-box) ; hit box height
                                           0)                  ; tick
                                     explosion-boxes))
         (play small-explosion)                                ; play sound
         (play player-explosion)                               ; play sound
         (set! is-player-alive #false)))
+
+     ; collision detection between player and power-ups
+     (cond
+       ; shield power-up
+       ((and
+         (equal? (box-to-list-collision player-box power-up-boxes) 'shield)
+         (< shield-strength shield-cap))
+        (set! shield-strength (+ shield-strength) 5)
+        (play shield-power-up))
+       ; main weapon power-up
+       ((and
+         (equal? (box-to-list-collision player-box power-up-boxes) 'main))
+        (set! is-main-weapon    #true)
+        (set! is-missile-weapon #false)
+        (set! is-wave-weapon    #false)
+        (set! is-beam-weapon    #false)
+        (play main-power-up))
+       ; missile weapon power-up
+       ((and
+         (equal? (box-to-list-collision player-box power-up-boxes) 'missile))
+        (set! is-missile-weapon #true)
+        (set! is-main-weapon    #false)
+        (set! is-wave-weapon    #false)
+        (set! is-beam-weapon    #false)
+        (play missile-power-up))
+       ; wave weapon power-up
+       ((and
+         (equal? (box-to-list-collision player-box power-up-boxes) 'wave))
+        (set! is-wave-weapon    #true)
+        (set! is-main-weapon    #false)
+        (set! is-missile-weapon #false)
+        (set! is-beam-weapon    #false)
+        (play wave-power-up))
+       ; beam weapon power-up
+       ((and
+         (equal? (box-to-list-collision player-box power-up-boxes) 'beam))
+        (set! is-beam-weapon    #true)
+        (set! is-main-weapon    #false)
+        (set! is-missile-weapon #false)
+        (set! is-wave-weapon    #false)
+        (play beam-power-up)))
+
+        ; set shield transparency depending on shield strength
+        (cond
+          ((< shield-strength 100)
+           (set! shield-alpha (/ shield-alpha .01))))
 
      ; player model animation
      ; move right
@@ -470,7 +542,47 @@
 ; FUNCTIONS
 ; called by word-tick / word-event / word-output
 
-; destroys enemies that hit shield
+(define (make-sprites boxes)
+  (cond
+    ((null? boxes) '())
+    (else          
+     (cons (sprite (car    (car boxes))       ; x location
+                   (cadr   (car boxes))       ; y location
+                   ;(cadddr (cdr (car boxes))) ; sprite-name
+                   (list-ref (car boxes) 5))  ; sprite name
+                   #:a alpha
+                   #:layer 3)
+           (make-sprites (cdr boxes) sprite-index))))
+
+; enemy bullet creation
+(define (make-enemy-bullets enemies)
+  (cond
+    ((null? enemies)
+     '())
+    ((< (random 1000) 7)
+     (set! enemy-bullet-boxes
+           (cons (list (car    (car enemies))        ; x location
+                       (cadr   (car enemies))        ; y location
+                       (caddr  (car enemies))        ; hit-box width
+                       (cadddr (car enemies))        ; hit-box height
+                       (cadddr (cdr (car enemies)))) ; sprite name
+                 enemy-bullet-boxes))
+     (make-enemy-bullets (cdr enemies)))
+    (else (make-enemy-bullets (cdr enemies)))))
+
+; creates a list of sprites
+;(define (make-sprites boxes sprite-index)
+;  (cond
+;    ((null? boxes) '())
+;    (else          
+;     (cons (sprite (car (car boxes))
+;                   (cadr (car boxes))
+;                   sprite-index
+;                   #:a alpha
+;                   #:layer 3)
+;           (make-sprites (cdr boxes) sprite-index)))))
+
+; handles shield / destroys enemies that hit shield
 (define (shield-kill enemies)
   (cond
     ((null? enemies) '())
@@ -543,26 +655,15 @@
                    #:layer 3)
            (make-explosion-sprites (cdr boxes))))))
 
-; creates a list of sprites
-(define (make-sprites boxes sprite-index)
-  (cond
-    ((null? boxes) '())
-    (else          
-     (cons (sprite (car (car boxes))
-                   (cadr (car boxes))
-                   sprite-index
-                   #:a alpha
-                   #:layer 3)
-           (make-sprites (cdr boxes) sprite-index)))))
-
 ; adds projectiles to bullet-boxes list
-(define (fire-projectile)
-  (set! bullet-boxes (cons (list (+ (car player-box) 25)
-                                 (cadr player-box)
-                                 8
-                                 8)
+(define (fire-projectile bullet-type hit-box-x hit-box-y)
+  (set! bullet-boxes (cons (list (+ (car player-box) 25) ; x position
+                                 (cadr player-box)       ; y position
+                                 hit-box-x               ; hit-box width
+                                 hit-box-y               ; hit-box height
+                                 bullet-type)            ; bullet type
                            bullet-boxes))
-  (play main-weapon)) ; play main-weapon sound
+  (play bullet-type))                                    ; play bullet sound
 
 ; player movement
 ; move right
