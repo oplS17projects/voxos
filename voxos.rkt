@@ -396,8 +396,14 @@
      (define temp-enemy-count (length enemy-boxes))
 
      ; removes shield-killed enemies
-     ;(set! enemy-boxes (shield-kill enemy-boxes))
-       
+     
+     (set! enemy-boxes (shield-kill enemy-boxes))
+
+
+     (display "\n")
+     (display (length enemy-boxes))
+
+     
      ; removes off-screen enemies
      ;(set! enemy-boxes (filter (lambda (e) (> (car e) -340)) enemy-boxes))
 
@@ -408,10 +414,10 @@
      ;(set! shield-strength (- shield-strength (* temp-enemy-count 5)))
 
      ; end game when earth is hit - shield strength is 0
-     (cond
-       ((< shield-strength 0)
-         (set! is-player-alive #false)
-         (set! shield-strength 0)))
+;     (cond
+;       ((< shield-strength 0)
+;         (set! is-player-alive #false)
+;         (set! shield-strength 0)))
      
      ; moves enemy-boxes
      (set! enemy-boxes (move-boxes enemy-boxes enemy-speed))
@@ -474,7 +480,7 @@
 (define (shield-kill enemies)
   (cond
     ((null? enemies) '())
-    ((and (> shield-strength 0) (= (car (car enemies)) 0))
+    ((and (> shield-strength 0) (< (car (car enemies)) -200))
      (set! explosion-boxes
            (cons (list (car    (car enemies))               ; x
                        (cadr   (car enemies))               ; y
@@ -483,15 +489,16 @@
                        1)                                   ; set tick
                  explosion-boxes))
      (play shield-enemy-kill)                               ; play sound
-     (set! player-score (- player-score 200))               ; update score
      (set! shield-strength (- shield-strength 5))           ; update shield
-     ;(set! enemy-boxes  (remove (car enemies) enemies))    ; remove enemy
+     (set! enemy-boxes  (remove (car enemies) enemies))     ; remove enemy
      (shield-kill (cdr enemies)))
-     ((= (car (car enemies)) -340)                          ; remove off-screen
-      ;(remove (car enemies) enemies)
-      (shield-kill (cdr enemies)))
+     ((and (< shield-strength 0) (> (car (car enemies)) -340)) ; remove enemies
+      (remove (car enemies) enemies)
+      (set! is-player-alive #false)
+      (set! shield-strength 0))
      (else
-      (shield-kill (cdr enemies)))))
+      (cons (car enemies)
+            (shield-kill (cdr enemies))))))
 
 ; animates explosions by modifying tick parameter
 (define (move-explosion-boxes explosions)
