@@ -395,15 +395,9 @@
      ; original enemy count - used in calculating damage to shield
      (define temp-enemy-count (length enemy-boxes))
 
-     ; removes shield-killed enemies
-     
+     ; handles shield / shield-killed enemies
      (set! enemy-boxes (shield-kill enemy-boxes))
 
-
-     (display "\n")
-     (display (length enemy-boxes))
-
-     
      ; removes off-screen enemies
      ;(set! enemy-boxes (filter (lambda (e) (> (car e) -340)) enemy-boxes))
 
@@ -482,20 +476,21 @@
     ((null? enemies) '())
     ((and (> shield-strength 0) (< (car (car enemies)) -200))
      (set! explosion-boxes
-           (cons (list (car    (car enemies))               ; x
-                       (cadr   (car enemies))               ; y
-                       (caddr  (car enemies))               ; width
-                       (cadddr (car enemies))               ; height
-                       1)                                   ; set tick
+           (cons (list (car    (car enemies))                    ; x
+                       (cadr   (car enemies))                    ; y
+                       (caddr  (car enemies))                    ; width
+                       (cadddr (car enemies))                    ; height
+                       1)                                        ; set tick
                  explosion-boxes))
-     (play shield-enemy-kill)                               ; play sound
-     (set! shield-strength (- shield-strength 5))           ; update shield
-     (set! enemy-boxes  (remove (car enemies) enemies))     ; remove enemy
+     (play shield-enemy-kill)                                    ; play sound
+     (set! shield-strength (- shield-strength 5))                ; update shield
+     (set! enemy-boxes  (remove (car enemies) enemies))          ; remove enemy
      (shield-kill (cdr enemies)))
-     ((and (< shield-strength 0) (> (car (car enemies)) -340)) ; remove enemies
+     ((and (<= shield-strength 0) (<= (car (car enemies)) -350)) ; cull enemies
       (remove (car enemies) enemies)
       (set! is-player-alive #false)
-      (set! shield-strength 0))
+      (set! shield-strength 0)
+      (shield-kill (cdr enemies)))
      (else
       (cons (car enemies)
             (shield-kill (cdr enemies))))))
