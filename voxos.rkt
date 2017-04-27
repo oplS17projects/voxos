@@ -16,7 +16,7 @@
 (define player-explosion          (rs-read "./sound/player-explosion.wav"))
 (define small-explosion           (rs-read "./sound/small-explosion.wav"))
 (define medium-explosion          (rs-read "./sound/medium-explosion.wav"))
-
+(define shield-enemy-kill         (rs-read "./sound/shield-enemy-kill.wav"))
 ; resolution
 (define canvas-size-x          640) ; width
 (define canvas-size-y          480) ; height
@@ -26,6 +26,7 @@
 
 ; add sprites to database
 (add-sprite!/file sprite-db       'player         "./sprites/player.png")
+(add-sprite!/file sprite-db       'earth          "./sprites/earth.png")
 (add-sprite!/file sprite-db       'enemy          "./sprites/enemy.png")
 (add-sprite!/file sprite-db       'static-bg      "./sprites/static-bg.png")
 (add-sprite!/file sprite-db       'main-bg        "./sprites/main-bg.png")
@@ -44,6 +45,7 @@
 
 ; sprite index
 (define player-index              (sprite-idx compiled-db 'player))
+(define earth-index               (sprite-idx compiled-db 'earth))
 (define enemy-index               (sprite-idx compiled-db 'enemy))
 (define static-bg-index           (sprite-idx compiled-db 'static-bg))
 (define main-bg-index             (sprite-idx compiled-db 'main-bg))
@@ -84,6 +86,7 @@
 (define alpha                  1.0) ; transparency amount
 (define shield-strength        100) ; shield strength
 (define player-score             0) ; player score
+(define shield-location       -300) ; shield x-axis location
 
 ; screen edge collision boxes
 (define border-boxes
@@ -169,22 +172,26 @@
                secondary-bg-index
                #:layer 2))
 
+     ; earth sprite
+     (define earth-sprite      (sprite 0.0
+                                       0.0
+                                       earth-index #:layer 3))
      ; player sprite
-     (define player-sprite (sprite (car player-box)
-                                   (cadr player-box)
-                                   player-index #:layer 3))
+     (define player-sprite     (sprite (car player-box)
+                                       (cadr player-box)
+                                       player-index #:layer 3))
 
      ; game-over sprite
-     (define game-over-sprite (sprite 0.0
-                                      0.0
-                                      game-over-index #:layer 2))
+     (define game-over-sprite  (sprite 0.0
+                                       0.0
+                                       game-over-index #:layer 2))
 
 
      ; list of all sprites to be drawn
-     (define dynamic-sprites (list main-bg-sprite
-                                   tile-main-bg-sprite
-                                   secondary-bg-sprite
-                                   tile-secondary-bg-sprite))
+     (define dynamic-sprites   (list main-bg-sprite
+                                     tile-main-bg-sprite
+                                     secondary-bg-sprite
+                                     tile-secondary-bg-sprite))
 
      ; draws player if alive
      (cond
@@ -192,29 +199,36 @@
          (set! dynamic-sprites (cons player-sprite
                                      dynamic-sprites)))
        (else
-        (set! player-box         '(-275.0 500.0 64 32)) ; move player off-screen
-        (set! dynamic-sprites (cons game-over-sprite
+        (set! player-box      '(-275.0 500.0 64 32))  ; move player off-screen
+        (set! dynamic-sprites  (cons game-over-sprite ; display game-over screen
                                      dynamic-sprites))))
 
+     ; draws earth
+     (set! dynamic-sprites (cons earth-sprite
+                                 dynamic-sprites))
+     
      ; adds new player bullets to dynamic sprites
-     (set! dynamic-sprites (append dynamic-sprites
-                                   (make-sprites bullet-boxes
-                                                 main-weapon-index)))
+     (set! dynamic-sprites     (append dynamic-sprites
+                                       (make-sprites bullet-boxes
+                                                     main-weapon-index)))
 
      ; adds new enemy bullets to dynamic sprites
-     (set! dynamic-sprites (append dynamic-sprites
+     (set! dynamic-sprites     (append dynamic-sprites
                                    (make-sprites enemy-bullet-boxes
                                                  enemy-weapon-index)))
      ; adds enemies to dynamic sprites
-     (set! dynamic-sprites (append dynamic-sprites
+     (set! dynamic-sprites     (append dynamic-sprites
                                    (make-sprites enemy-boxes
                                                  enemy-index)))
 
      ; adds explosions to dynamic sprites
-     (set! dynamic-sprites (append dynamic-sprites
-                                   (make-explosion-sprites explosion-boxes)))
+     (set! dynamic-sprites     (append dynamic-sprites
+                                       (make-explosion-sprites
+                                        explosion-boxes)))
      ; draws everything
-     (rendering-states->draw layer-config static-sprites dynamic-sprites))
+     (rendering-states->draw layer-config
+                             static-sprites
+                             dynamic-sprites))
 
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ; WORD-EVENT
@@ -378,20 +392,24 @@
      ; projectile and enemy collision detection
      (enemy-projectile-collision enemy-boxes bullet-boxes)
 
-     ; removes off-screen enemies
-     (define temp-enemy-count (length enemy-boxes)) ; original enemy count
-     
-     (set! enemy-boxes (filter (lambda (e) (> (car e) -340)) enemy-boxes))
+     ; original enemy count - used in calculating damage to shield
+     (define temp-enemy-count (length enemy-boxes))
 
-     ; updated enemy count
-     (set! temp-enemy-count (- temp-enemy-count (length enemy-boxes)))
+     ; removes shield-killed enemies
+     ;(set! enemy-boxes (shield-kill enemy-boxes))
+       
+     ; removes off-screen enemies
+     ;(set! enemy-boxes (filter (lambda (e) (> (car e) -340)) enemy-boxes))
+
+     ; updated enemy count - number of enemies that damaged shield
+     ;(set! temp-enemy-count (- temp-enemy-count (length enemy-boxes)))
 
      ; update shield strength when hit by enemies
-     (set! shield-strength (- shield-strength (* temp-enemy-count 5)))
+     ;(set! shield-strength (- shield-strength (* temp-enemy-count 5)))
 
-     ; end game when shield strength is 0
+     ; end game when earth is hit - shield strength is 0
      (cond
-       ((<= shield-strength 0)
+       ((< shield-strength 0)
          (set! is-player-alive #false)
          (set! shield-strength 0)))
      
@@ -452,12 +470,35 @@
 ; FUNCTIONS
 ; called by word-tick / word-event / word-output
 
+; destroys enemies that hit shield
+(define (shield-kill enemies)
+  (cond
+    ((null? enemies) '())
+    ((and (> shield-strength 0) (= (car (car enemies)) 0))
+     (set! explosion-boxes
+           (cons (list (car    (car enemies))               ; x
+                       (cadr   (car enemies))               ; y
+                       (caddr  (car enemies))               ; width
+                       (cadddr (car enemies))               ; height
+                       1)                                   ; set tick
+                 explosion-boxes))
+     (play shield-enemy-kill)                               ; play sound
+     (set! player-score (- player-score 200))               ; update score
+     (set! shield-strength (- shield-strength 5))           ; update shield
+     ;(set! enemy-boxes  (remove (car enemies) enemies))    ; remove enemy
+     (shield-kill (cdr enemies)))
+     ((= (car (car enemies)) -340)                          ; remove off-screen
+      ;(remove (car enemies) enemies)
+      (shield-kill (cdr enemies)))
+     (else
+      (shield-kill (cdr enemies)))))
+
 ; animates explosions by modifying tick parameter
 (define (move-explosion-boxes explosions)
   (cond
     ((null? explosions)
      '())
-    ((<= (cadddr (cdr (car explosions))) 15)
+    ((<= (cadddr (cdr (car explosions))) 15)            ; tick threshold
      (cons (list (car    (car explosions))              ; x
                  (cadr   (car explosions))              ; y
                  (caddr  (car explosions))              ; width
@@ -598,26 +639,26 @@
 
 ; background music looping function
 (define (play-rsound-loop audio #:init-volume [init-volume 0.3])
-  (define myStream (make-pstream #:buffer-time 0.2)) ;; create pstream
+  (define myStream (make-pstream #:buffer-time 0.2)) ; create pstream
 
-  (pstream-set-volume! myStream init-volume) ;; set initial pstream volume
+  (pstream-set-volume! myStream init-volume)         ; set pstream volume
   
-  (define totalFrames (rs-frames audio)) ;; gets frame length from audio
+  (define totalFrames (rs-frames audio))             ; gets frame length
 
-  (define (audioLoop) ;; loops pstream function
-    (pstream-play myStream audio) ;; adds audio file to pstream
+  (define (audioLoop)                                ; loops pstream function
+    (pstream-play myStream audio)                    ; adds file to pstream
 
-    ;; callback function
-    ;; this calls itself once the audio file ends by using the frame length
+    ; callback function
+    ; this calls itself once the audio file ends by using the frame length
     (pstream-queue-callback myStream
                             audioLoop
                             (+ (pstream-current-frame myStream) totalFrames)))
 
-  (thread audioLoop)) ;; puts function into thread
+  (thread audioLoop))                                ; puts function into thread
 
 ; main
 (module+ main
-  (play-rsound-loop power-core #:init-volume .3) ; play background track
+  (play-rsound-loop power-core #:init-volume .3)     ; play background track
   (call-with-chaos
    (make-gui #:mode 'gl-core
              #:width canvas-size-x
