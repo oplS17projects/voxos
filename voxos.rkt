@@ -142,7 +142,7 @@
 (define player-speed             3) ; player       speed
 (define projectile-speed        10) ; bullet       speed
 (define power-up-speed          -1) ; power-up     speed
-(define enemy-bullet-speed      -5) ; enemy bullet speed
+(define enemy-bullet-speed      -4) ; enemy bullet speed
 (define enemy-speed             -2) ; enemy        speed
 (define shield-strength        100) ; shield       strength
 (define player-score             0) ; player       score
@@ -738,7 +738,7 @@
                  power-up-boxes))
      (make-power-up-boxes))
     ; beam weapon
-    ((< (random 10000) 4)
+    ((< (random 10000) 5)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
@@ -864,9 +864,9 @@
                  (cadddr (car boxes))
                  (cadddr (cdr (car boxes))))                          ; height
            (move-boxes (cdr boxes) speed)))
-    ((eq? (cadddr (cdr (car boxes))) beam-index)
-     (cons (car boxes)
-           (move-boxes (cdr boxes) speed)))
+;    ((eq? (cadddr (cdr (car boxes))) beam-index)
+;     (cons (car boxes)
+;           (move-boxes (cdr boxes) speed)))
     (else
      (cons (list (+ (car (car boxes)) speed) ; x
                  (cadr   (car boxes))        ; y
@@ -1013,7 +1013,7 @@
 ; MAIN
 ; main program
 (module+ main
-  (play-rsound-loop power-core #:init-volume .3)     ; play background track
+  (play-rsound-loop power-core #:init-volume 1.0)     ; play background track
   (call-with-chaos
    (make-gui #:mode 'gl-core
              #:width canvas-size-x
