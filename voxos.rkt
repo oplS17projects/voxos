@@ -81,7 +81,7 @@
 ; enemies
 (define basic-index               (sprite-idx compiled-db 'basic         ))
 (define droid-index               (sprite-idx compiled-db 'droid         ))
-(define elite-index               (sprite-idx compiled-db 'elite         ))
+(define bomber-index              (sprite-idx compiled-db 'bomber        ))
 (define fighter-index             (sprite-idx compiled-db 'fighter       ))
 ; backgrounds
 (define static-bg-index           (sprite-idx compiled-db 'static-bg     ))
@@ -98,6 +98,7 @@
 (define missile-power-up-index  (sprite-idx compiled-db 'missile-power-up))
 (define wave-power-up-index     (sprite-idx compiled-db 'wave-power-up   ))
 (define beam-power-up-index     (sprite-idx compiled-db 'beam-power-up   ))
+(define shield-power-up-index   (sprite-idx compiled-db 'shield-power-up ))
 ; game over
 (define game-over-index           (sprite-idx compiled-db 'game-over     ))
 ; explosion frames
@@ -136,7 +137,7 @@
 (define enemy-frequency         15) ; enemy        frequency
 (define player-speed             3) ; player       speed
 (define projectile-speed        10) ; bullet       speed
-(define power-up-speed          -7) ; power-up     speed
+(define power-up-speed          -1) ; power-up     speed
 (define enemy-bullet-speed      -5) ; enemy bullet speed
 (define enemy-speed             -2) ; enemy        speed
 (define shield-strength        100) ; shield       strength
@@ -163,10 +164,10 @@
         'wave
         'beam))
 (define enemy-list                  ; enemy        list
-  (list ''basic-index
-        ''droid-index
-        ''elite-index
-        ''fighter-index))
+  (list basic-index
+        droid-index
+        bomber-index
+        fighter-index))
 (define number-list
   (list -5 -4 -3 -2 -1 0
         1  2  3  4  5))             ; number       list
@@ -270,6 +271,12 @@
         (set! player-box      '(-275.0 500.0 64 32))  ; move player off-screen
         (set! dynamic-sprites  (cons game-over-sprite ; display game-over screen
                                       dynamic-sprites))))
+
+     ; draws earth
+     (set! dynamic-sprites     (cons static-bg-sprite
+                                      dynamic-sprites))
+
+
      ; draws earth
      (set! dynamic-sprites     (cons earth-sprite
                                       dynamic-sprites))
@@ -278,7 +285,7 @@
                                       dynamic-sprites))
      ; draws power-ups
      (set! dynamic-sprites     (append dynamic-sprites
-                                       (make-sprites power-up-boxes)))
+                                       (make-power-up-sprites power-up-boxes)))
      ; draws player bullets
      (set! dynamic-sprites     (append dynamic-sprites
                                        (make-sprites bullet-boxes)))
@@ -456,19 +463,24 @@
 
         ; randomly selects an enemy from a list of enemies
         (set! random-enemy
-              (list-ref enemy-list (random (length enemy-list))))
+              (list-ref enemy-list (random 3)))
 
-        (display " random enemy is ")
-        (display random-enemy)
+        ;(display "\n random enemy variable is ")
+        ;(display random-enemy)
         
         ; generate enemies
         (set! enemy-boxes (cons (list 340.0                  ; x location
                                       (- (random 448) 224.0) ; y location
                                       44                     ; hit-box width
                                       44                     ; hit-box height
-                                      'basic-index)          ; enemy sprite
+                                      random-enemy)          ; enemy sprite
                                 enemy-boxes))
 
+        ;(display "\n enemy boxes ")
+        ;(display enemy-boxes)
+        ;(display "\n enemy boxes 5th value: ")
+        ;(display (cadddr (cdr (car enemy-boxes))))
+        
         ; difficulty setting - enemy spawn frequency
         (set! enemy-frequency
               (+ (random (max 1 (- 100 (floor (/ player-score 70))))) 5)))
@@ -478,6 +490,8 @@
 
      ; create random power-ups
      (make-power-up-boxes)
+
+     (display power-up-boxes)
 
      ; moves power-up-boxes
      (set! power-up-boxes (move-boxes power-up-boxes power-up-speed))
@@ -518,14 +532,14 @@
        ; shield power-up
        ((and
          (equal? (player-power-ups-collision player-box power-up-boxes)
-                 'shield-power-up-index)
+                 'shield-power-up)
          (< shield-strength shield-cap))
         (set! shield-strength (+ shield-strength 5))
         (play shield-power-up))
        ; main weapon power-up
        ((and
          (equal? (player-power-ups-collision player-box power-up-boxes)
-                 'main-power-up-index))
+                 'main-power-up))
         (set! is-main-weapon    #true)
         (set! is-missile-weapon #false)
         (set! is-wave-weapon    #false)
@@ -534,7 +548,7 @@
        ; missile weapon power-up
        ((and
          (equal? (player-power-ups-collision player-box power-up-boxes)
-                 'missile-power-up-index))
+                 'missile-power-up))
         (set! is-missile-weapon #true)
         (set! is-main-weapon    #false)
         (set! is-wave-weapon    #false)
@@ -543,7 +557,7 @@
        ; wave weapon power-up
        ((and
          (equal? (player-power-ups-collision player-box power-up-boxes)
-                 'wave-power-up-index))
+                 'wave-power-up))
         (set! is-wave-weapon    #true)
         (set! is-main-weapon    #false)
         (set! is-missile-weapon #false)
@@ -552,17 +566,17 @@
        ; beam weapon power-up
        ((and
          (equal? (player-power-ups-collision player-box power-up-boxes)
-                 'beam-power-up-index))
+                 'beam-power-up))
         (set! is-beam-weapon    #true)
         (set! is-main-weapon    #false)
         (set! is-missile-weapon #false)
         (set! is-wave-weapon    #false)
         (play beam-power-up)))
 
-        ; set shield transparency depending on shield strength
-        (cond
-          ((< shield-strength 100)
-           (set! shield-alpha (/ shield-alpha .01))))
+     ; set shield transparency depending on shield strength
+     (cond
+       ((< shield-strength 100)
+        (set! shield-alpha (/ (+ 0.0 shield-strength) .01))))
 
      ; player model animation
      ; move right
@@ -604,46 +618,85 @@
 ; FUNCTIONS
 ; called by word-tick / word-event / word-output
 
+; power-up sprite creation
+(define (make-power-up-sprites boxes)
+;  (define sprite-name (cadddr (cdr (car boxes))))
+;  (define sprite-index 0)
+;  ; determine which sprite index to use
+;  (cond
+;    ((equal? sprite-name 'shield-power-up)
+;     (set! sprite-index shield-power-up-index))
+;    ((equal? sprite-name 'main-power-up)
+;     (set! sprite-index main-power-up-index))
+;    ((equal? sprite-name 'missile-power-up)
+;     (set! sprite-index missile-power-up-index))
+;    ((equal? sprite-name 'wave-power-up)
+;     (set! sprite-index wave-power-up-index))
+;    ((equal? sprite-name 'beam-power-up)
+;     (set! sprite-index beam-power-up-index)))
+  ; create sprite
+  (cond
+    ((null? boxes) '())
+    (else          
+     (cons (sprite (car    (car boxes))       ; x location
+                   (cadr   (car boxes))       ; y location
+                   (cadddr (cdr (car boxes)))
+                   ;sprite-index ; sprite-name
+                   ;(list-ref (car boxes) 3)   ; sprite name
+                   #:layer 3)
+           (make-sprites (cdr boxes))))))
+
 ; power-up creation
 (define (make-power-up-boxes)
   (cond
-    ((< (random 1000) 3)
+    ; shield power-up
+    ((< (random 10000) 3)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
-                       1                       ; hit-box width
-                       44                       ; hit-box height
-                       ''beam-power-up-index)    ; sprite name
+                       32                       ; hit-box width
+                       32                       ; hit-box height
+                       'shield-power-up)    ; sprite name
+                 power-up-boxes))
+     (make-power-up-boxes))
+    ; beam weapon
+    ((< (random 10000) 3)
+     (set! power-up-boxes
+           (cons (list 340.0                    ; x location
+                       (- (random 448) 224.0)   ; y location
+                       32                       ; hit-box width
+                       32                       ; hit-box height
+                       'beam-power-up)    ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))
     ; wave weapon
-    ((< (random 1000) 5)
+    ((< (random 10000) 5)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
-                       2                       ; hit-box width
+                       32                       ; hit-box width
                        32                       ; hit-box height
-                       ''wave-power-up-index)    ; sprite name
+                       'wave-power-up)    ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))
     ; missile weapon
-    ((< (random 1000) 7)
+    ((< (random 10000) 7)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
-                       3                       ; hit-box width
+                       32                       ; hit-box width
                        32                       ; hit-box height
-                       ''missile-power-up-index) ; sprite name
+                       'missile-power-up) ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))
     ; main weapon
-    ((< (random 1000) 10)
+    ((< (random 10000) 10)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
-                       4                       ; hit-box width
+                       32                       ; hit-box width
                        32                       ; hit-box height
-                       ''main-power-up-index)    ; sprite name
+                       'main-power-up)    ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))))
 
@@ -654,10 +707,10 @@
     (else          
      (cons (sprite (car    (car boxes))       ; x location
                    (cadr   (car boxes))       ; y location
-                   ;(cadddr (cdr (car boxes))) ; sprite-name
-                   (list-ref (car boxes) 4))  ; sprite name
+                   (cadddr (cdr (car boxes))) ; sprite-name
+                   ;(list-ref (car boxes) 3)   ; sprite name
                    #:layer 3)
-           (make-sprites (cdr boxes)))))
+           (make-sprites (cdr boxes))))))
 
 ; enemy bullet creation
 (define (make-enemy-bullets enemies)
@@ -670,7 +723,7 @@
                        (cadr   (car enemies))        ; y location
                        (caddr  (car enemies))        ; hit-box width
                        (cadddr (car enemies))        ; hit-box height
-                       (cadddr (cdr (car enemies)))) ; sprite name
+                       enemy-index)                  ; sprite name
                  enemy-bullet-boxes))
      (make-enemy-bullets (cdr enemies)))
     (else (make-enemy-bullets (cdr enemies)))))
@@ -727,7 +780,7 @@
          (equal? (list-ref (car boxes) 4) 'wave-power-up)
          (equal? (list-ref (car boxes) 4) 'beam-power-up))
      (cons (list (+ (car (car boxes)) speed)                    ; x
-                 (+ (cadr   (car boxes)) (random-element list)) ; random y
+                 (+ (cadr   (car boxes)) (random-element number-list)) ; random y
                  (caddr  (car boxes))                           ; width
                  (cadddr (car boxes)))                          ; height
            (move-boxes (cdr boxes) speed)))
@@ -735,7 +788,8 @@
      (cons (list (+ (car (car boxes)) speed) ; x
                  (cadr   (car boxes))        ; y
                  (caddr  (car boxes))        ; width
-                 (cadddr (car boxes)))       ; height
+                 (cadddr (car boxes))        ; height
+                 (cadddr (cdr (car boxes))))
            (move-boxes (cdr boxes) speed)))))
 
 ; creates a list of animated explosion sprites
