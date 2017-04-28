@@ -48,7 +48,7 @@
 (add-sprite!/file sprite-db  'bomber           "./sprites/bomber.png"          )
 ; backgrounds
 (add-sprite!/file sprite-db  'static-bg        "./sprites/static-bg.png"       )
-(add-sprite!/file sprite-db  'main-bg          "./sprites/main-bg.png"         )
+(add-sprite!/file sprite-db  'main-bg          "./sprites/primary-bg.png"      )
 (add-sprite!/file sprite-db  'secondary-bg     "./sprites/secondary-bg.png"    )
 ; weapons
 (add-sprite!/file sprite-db  'main-weapon      "./sprites/main-weapon.png"     )
@@ -249,6 +249,10 @@
                                         0.0
                                         #:a shield-alpha
                                         shield-index #:layer 3))
+
+     (newline)
+     (display shield-alpha)
+     
      ; player sprite
      (define player-sprite     (sprite (car player-box)
                                        (cadr player-box)
@@ -272,9 +276,9 @@
         (set! dynamic-sprites  (cons game-over-sprite ; display game-over screen
                                       dynamic-sprites))))
 
-     ; draws earth
-     (set! dynamic-sprites     (cons static-bg-sprite
-                                      dynamic-sprites))
+     ; draws static-bg
+     ;(set! dynamic-sprites     (cons static-bg-sprite
+      ;                                dynamic-sprites))
 
 
      ; draws earth
@@ -326,6 +330,11 @@
         (set! explosion-boxes    '())
         (set! power-up-boxes     '())
         (set! player-score         0)
+        (set! is-main-weapon    #true)
+        (set! is-missile-weapon #false)
+        (set! is-wave-weapon    #false)
+        (set! is-beam-weapon    #false)
+        (set! shield-alpha 1.0        )
         (set! shield-strength    100)]
 
        ; W A S D keys - controls player
@@ -379,7 +388,7 @@
            (play wave-weapon))        ; play sound
           ; missile weapon
           ((and (not is-fired-input) is-missile-weapon is-player-alive)
-           (fire-projectile missile-index 16 8)
+           (fire-projectile missile-index 20 4)
            (play missile-weapon))     ; play sound
           ; beam weapon
           ((and (not is-fired-input) is-beam-weapon is-player-alive)
@@ -424,7 +433,8 @@
      ; animates explosions-boxes
      (set! explosion-boxes
            (move-explosion-boxes explosion-boxes))
-     
+
+    
      ; move main background
      (cond
        ((<= main-bg-x -640)
@@ -476,10 +486,6 @@
                                       random-enemy)          ; enemy sprite
                                 enemy-boxes))
 
-        ;(display "\n enemy boxes ")
-        ;(display enemy-boxes)
-        ;(display "\n enemy boxes 5th value: ")
-        ;(display (cadddr (cdr (car enemy-boxes))))
         
         ; difficulty setting - enemy spawn frequency
         (set! enemy-frequency
@@ -487,11 +493,8 @@
        (else
         (set! tick-counter (+ tick-counter 1))))
 
-
      ; create random power-ups
      (make-power-up-boxes)
-
-     (display power-up-boxes)
 
      ; moves power-up-boxes
      (set! power-up-boxes (move-boxes power-up-boxes power-up-speed))
@@ -528,17 +531,21 @@
 
      ;(detect-player-power-up-collision)
      ; collision detection between player and power-ups
+
+     (define current-power-up
+       (player-power-ups-collision player-box power-up-boxes))
+     
      (cond
        ; shield power-up
        ((and
-         (equal? (player-power-ups-collision player-box power-up-boxes)
+         (eq? current-power-up
                  'shield-power-up)
          (< shield-strength shield-cap))
         (set! shield-strength (+ shield-strength 5))
         (play shield-power-up))
        ; main weapon power-up
        ((and
-         (equal? (player-power-ups-collision player-box power-up-boxes)
+         (eq? current-power-up
                  'main-power-up))
         (set! is-main-weapon    #true)
         (set! is-missile-weapon #false)
@@ -547,7 +554,7 @@
         (play main-power-up))
        ; missile weapon power-up
        ((and
-         (equal? (player-power-ups-collision player-box power-up-boxes)
+         (eq? current-power-up
                  'missile-power-up))
         (set! is-missile-weapon #true)
         (set! is-main-weapon    #false)
@@ -556,7 +563,7 @@
         (play missile-power-up))
        ; wave weapon power-up
        ((and
-         (equal? (player-power-ups-collision player-box power-up-boxes)
+         (eq? current-power-up
                  'wave-power-up))
         (set! is-wave-weapon    #true)
         (set! is-main-weapon    #false)
@@ -565,7 +572,7 @@
         (play wave-power-up))
        ; beam weapon power-up
        ((and
-         (equal? (player-power-ups-collision player-box power-up-boxes)
+         (eq? current-power-up
                  'beam-power-up))
         (set! is-beam-weapon    #true)
         (set! is-main-weapon    #false)
@@ -575,8 +582,10 @@
 
      ; set shield transparency depending on shield strength
      (cond
+       ((<= shield-strength 0)
+        (set! shield-alpha 0.0))
        ((< shield-strength 100)
-        (set! shield-alpha (/ (+ 0.0 shield-strength) .01))))
+        (set! shield-alpha (+ .5 (* .5 (/ (+ 0.0 shield-strength) 100))))))
 
      ; player model animation
      ; move right
@@ -620,37 +629,46 @@
 
 ; power-up sprite creation
 (define (make-power-up-sprites boxes)
-;  (define sprite-name (cadddr (cdr (car boxes))))
-;  (define sprite-index 0)
-;  ; determine which sprite index to use
-;  (cond
-;    ((equal? sprite-name 'shield-power-up)
-;     (set! sprite-index shield-power-up-index))
-;    ((equal? sprite-name 'main-power-up)
-;     (set! sprite-index main-power-up-index))
-;    ((equal? sprite-name 'missile-power-up)
-;     (set! sprite-index missile-power-up-index))
-;    ((equal? sprite-name 'wave-power-up)
-;     (set! sprite-index wave-power-up-index))
-;    ((equal? sprite-name 'beam-power-up)
-;     (set! sprite-index beam-power-up-index)))
+  (define sprite-name 'temp)
+  (define sprite-index 0)
+  (if (null? boxes)
+      '()
+      (begin
+        ;(display "\n5th value: ")
+        ;(display (cadddr (cdr (car boxes))))
+
+        (set! sprite-name (list-ref (car boxes) 4))
+        ; determine which sprite index to use
+  
+        (cond
+          ((eq? sprite-name 'shield-power-up)
+           (set! sprite-index shield-power-up-index))
+          ((eq? sprite-name 'main-power-up)
+           (set! sprite-index main-power-up-index))
+          ((eq? sprite-name 'missile-power-up)
+           (set! sprite-index missile-power-up-index))
+          ((eq? sprite-name 'wave-power-up)
+           (set! sprite-index wave-power-up-index))
+          ((eq? sprite-name 'beam-power-up)
+           (set! sprite-index beam-power-up-index)))))
   ; create sprite
   (cond
     ((null? boxes) '())
-    (else          
+    (else
+     
      (cons (sprite (car    (car boxes))       ; x location
                    (cadr   (car boxes))       ; y location
-                   (cadddr (cdr (car boxes)))
-                   ;sprite-index ; sprite-name
+                   ;(cadddr (cdr (car boxes)))
+                   sprite-index ; sprite-name
                    ;(list-ref (car boxes) 3)   ; sprite name
                    #:layer 3)
-           (make-sprites (cdr boxes))))))
+           (make-power-up-sprites (cdr boxes))))))
 
 ; power-up creation
 (define (make-power-up-boxes)
   (cond
     ; shield power-up
-    ((< (random 10000) 3)
+    ((< (random 10000) 5)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
@@ -660,7 +678,7 @@
                  power-up-boxes))
      (make-power-up-boxes))
     ; beam weapon
-    ((< (random 10000) 3)
+    ((< (random 10000) 15)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
@@ -670,7 +688,7 @@
                  power-up-boxes))
      (make-power-up-boxes))
     ; wave weapon
-    ((< (random 10000) 5)
+    ((< (random 10000) 4)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
@@ -680,7 +698,7 @@
                  power-up-boxes))
      (make-power-up-boxes))
     ; missile weapon
-    ((< (random 10000) 7)
+    ((< (random 10000) 4)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
@@ -690,7 +708,7 @@
                  power-up-boxes))
      (make-power-up-boxes))
     ; main weapon
-    ((< (random 10000) 10)
+    ((< (random 10000) 3)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
@@ -774,15 +792,17 @@
   (cond
     ((null? boxes) '())
     ; animates y-axis of power-ups
-    ((or (equal? (list-ref (car boxes) 4) 'shield-power-up)
-         (equal? (list-ref (car boxes) 4) 'main-power-up)
-         (equal? (list-ref (car boxes) 4) 'missile-power-up)
-         (equal? (list-ref (car boxes) 4) 'wave-power-up)
-         (equal? (list-ref (car boxes) 4) 'beam-power-up))
+    ((or (eq? (list-ref (car boxes) 4) 'shield-power-up)
+         (eq? (list-ref (car boxes) 4) 'main-power-up)
+         (eq? (list-ref (car boxes) 4) 'missile-power-up)
+         (eq? (list-ref (car boxes) 4) 'wave-power-up)
+         (eq? (list-ref (car boxes) 4) 'beam-power-up))
      (cons (list (+ (car (car boxes)) speed)                    ; x
-                 (+ (cadr   (car boxes)) (random-element number-list)) ; random y
+                 ;(+ (cadr   (car boxes)) (random-element number-list)) ; random y
+                 (* 100 (sin (/ (car   (car boxes)) 60.0))) ; random y
                  (caddr  (car boxes))                           ; width
-                 (cadddr (car boxes)))                          ; height
+                 (cadddr (car boxes))
+                 (cadddr (cdr (car boxes))))                          ; height
            (move-boxes (cdr boxes) speed)))
     (else
      (cons (list (+ (car (car boxes)) speed) ; x
@@ -848,6 +868,7 @@
   (cond
     ((null? power-ups) #false)
     ((box-to-box-collision player (car power-ups))
+     (set! power-up-boxes (remove (car power-ups) power-up-boxes))
      (list-ref (car power-ups) 4)) ; collision - returns name of power-up
     (else (player-power-ups-collision player (cdr power-ups)))))
 
@@ -919,7 +940,7 @@
 
 ; allows random selection
 (define (random-element list)
-  (list-ref list (random (length list))))
+  (list-ref list (random (- (length list) 1))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; MAIN
