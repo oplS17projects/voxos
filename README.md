@@ -1,96 +1,53 @@
 # Voxos - 2D Side Scroller Game - Bill Bobos
 
-
 ### Statement
 
-Voxos is a 2D side scrolling game developed in Racket. It uses the Draw, Mode-Lambda, and Rsound libraries.
+Voxos is a 2D side scrolling game developed in Racket. It uses the Lux, Mode-Lambda, and Rsound libraries.
 It's a fun way to explore a real world project using Racket, functional programming, and data abstraction.
-We hope to learn real-world applications of the lessons learned in class.
+I learned real-world applications of the lessons learned in class.
 
 ### Analysis
 
-- Data abstraction will be used for the environment, player, enemies, and sound
-- Recursion will be used in sound and music rendering, sound processing, and other sound events
-- Map, filter, and reduce will be used primarily with enemy, and environmental objects to process effects, and game events
-- Object orientation will be used for the environment, player, and enemies
-- State modification will be used with to manage the player and enemy states
+- Data abstraction was used for the environment, player, enemies, and sound
+- Recursion was used in graphics, events, sound and music rendering, sound processing, and other events
+- Filter was used primarily with enemy, and environmental objects to process effects, and game events
+- State modification was used with to manage the player and enemy states
 
 ### External Technologies
 
-- We will interact with a graphics database that stores sprites
-- We are generating and processing sound effects and music
+- I interacted with a graphics database that stores sprites
+- I generated and processing sound effects and music
 
 ### Data Sets or other Source Materials
 
-- We will be using new art source material created by Bill
-- We will be using new sound source material created by Bill
-- We will externally sourced music
-- All existing data we need is easily converted using web based tools
+- I created all new art source material
+- I created all new sound effects source material
+- I used externally sourced music
+- All existing data I need was easily converted using web based tools
 
 ### Deliverable and Demonstration
 
-- At the end of the project I hope to have a playable level with sound effects and music
-- The game will be interactive and playable
+- At the end of the project I have a playable level with graphics, sound effects, and music
+- The game is interactive and playable
 
 ### Evaluation of Results
 
-- I'm successful if there is a functional demo
-- A functional demo that includes player movement, and player interaction
+- I am successful in creating a functional game
+- The functional game includes player movement, and player interaction
 
 ## Architecture Diagram
 
-![Architecture Diagram](https://raw.githubusercontent.com/oplS17projects/voxos/master/Architechture%20Diagram.jpg)
-
-&nbsp;&nbsp;&nbsp;&nbsp;The Play Environment will be a sprite created by Bill which will then be mapped onto a cylindrical render layer using mode-lambda and racket/draw. This sprite will then be continuously rotated by updating its stored theta value to achieve a scrolling effect. A separate layer will be populated with the various other sprites in the game, such as the player, projectiles, and enemies. The sprite objects in the game will all be loaded and arranged on layers by mode-lamba and drawn on-screen by racket-draw. All the while, sound effects and music will be played using rsound. 
-
-## Schedule
-
-### First Milestone (Sun Apr 9)
-
-- We want to have a functioning environment - either static or scrolling
-- This will include interfacing with Bill's artwork
-- DONE: Bill's functioning external sprite database
-- DONE: Bill's placeholder environmental artwork
-- DONE: Bill's placeholder player artwork
-
-## Sample Sprites
-![Sample sprites image](https://raw.githubusercontent.com/oplS17projects/voxos/master/sample-sprites.png)
-
-## Debug Image - Compiled Sprite Database
-![Debug compiled sprite database](https://raw.githubusercontent.com/oplS17projects/voxos/master/sprites.png)
-
-### Second Milestone (Mon Apr 17)
-
-- Teammate abandoned project
-- Consulted with Professor McCarthy
-- Bug(s) discovered in Mode-Lambda which slowed development
-- Alternate workaround is possible
-- Project scope changing
-- Switched and incorporated new Lux library
-- Completed many explorations into screen drawing, animating layers, sprites, etc. using racket/gui and Lux
-- Experimental folder contains various code explorations used to create and draw animation using sprites and layers
-- DONE: functioning player movement - rudimentary
-- IN PROGRESS: We want functional player interaction
-
-### Public Presentation (Mon Apr 24, Wed Apr 26, or Fri Apr 28)
-
-- We want to incorporate interactive functionality between the player and enemies
-- Bill finishing up all remaining sprite objects
-- Bill incorporating sound into objects
-- Bill incorporating music into the demo
+![Architecture Diagram](https://raw.githubusercontent.com/oplS17projects/voxos/master/new-diagram.jpg)
 
 ## Responsibilities
 
 ### Bill Bobos @wbobos
 
 - EVERYTHING
-- environment
-- environment interaction
-- player movement
-- player interaction
+- all environment interaction
+- all player movement
+- all player interaction
+- all collision detection
 - all artwork - backgrounds, player, enemies, effects
 - all sound effects - sound effects, sound processing
 - all music - music, music processing, streaming objects
-- create sprite database
-- create sprite objects
-- create sound/music streams
