@@ -40,11 +40,12 @@
 ; add sprites to database
 (add-sprite!/file sprite-db  'player           "./sprites/player.png"          )
 (add-sprite!/file sprite-db  'earth            "./sprites/earth.png"           )
+(add-sprite!/file sprite-db  'shield           "./sprites/shield.png"          )
 ; enemies
 (add-sprite!/file sprite-db  'basic            "./sprites/basic.png"           )
 (add-sprite!/file sprite-db  'droid            "./sprites/droid.png"           )
-(add-sprite!/file sprite-db  'elite            "./sprites/basic.png"           )
-(add-sprite!/file sprite-db  'fighter          "./sprites/basic.png"           )
+(add-sprite!/file sprite-db  'fighter          "./sprites/fighter.png"         )
+(add-sprite!/file sprite-db  'bomber           "./sprites/bomber.png"          )
 ; backgrounds
 (add-sprite!/file sprite-db  'static-bg        "./sprites/static-bg.png"       )
 (add-sprite!/file sprite-db  'main-bg          "./sprites/main-bg.png"         )
@@ -76,6 +77,7 @@
 ; sprite index
 (define player-index              (sprite-idx compiled-db 'player        ))
 (define earth-index               (sprite-idx compiled-db 'earth         ))
+(define shield-index              (sprite-idx compiled-db 'shield        ))
 ; enemies
 (define basic-index               (sprite-idx compiled-db 'basic         ))
 (define droid-index               (sprite-idx compiled-db 'droid         ))
@@ -149,7 +151,7 @@
                   (0 -250 640 20))) ; bottom screen edge hit box
 ; misc hit boxes
 (define player-box
-               '(-275.0 0.0 64 32)) ; starting     position
+               '(-250.0 0.0 64 32)) ; starting     position
 (define bullet-boxes           '()) ; bullet       hit-boxes
 (define enemy-bullet-boxes     '()) ; enemy bullet hit-boxes
 (define enemy-boxes            '()) ; enemy        hit-boxes
@@ -161,10 +163,13 @@
         'wave
         'beam))
 (define enemy-list                  ; enemy        list
-  (list basic-index
-        droid-index
-        elite-index
-        fighter-index))
+  (list ''basic-index
+        ''droid-index
+        ''elite-index
+        ''fighter-index))
+(define number-list
+  (list -5 -4 -3 -2 -1 0
+        1  2  3  4  5))             ; number       list
 
 ; player control input toggles
 (define is-up-input         #false) ; up
@@ -234,28 +239,28 @@
                tile-secondary-bg-y
                secondary-bg-index
                #:layer 2))
-
      ; earth sprite
      (define earth-sprite      (sprite 0.0
                                        0.0
                                        earth-index #:layer 3))
+     ; shield sprite
+     (define shield-sprite      (sprite 0.0
+                                        0.0
+                                        #:a shield-alpha
+                                        shield-index #:layer 3))
      ; player sprite
      (define player-sprite     (sprite (car player-box)
                                        (cadr player-box)
                                        player-index #:layer 3))
-
      ; game-over sprite
      (define game-over-sprite  (sprite 0.0
                                        0.0
                                        game-over-index #:layer 2))
-
-
      ; list of all sprites to be drawn
      (define dynamic-sprites   (list main-bg-sprite
                                      tile-main-bg-sprite
                                      secondary-bg-sprite
                                      tile-secondary-bg-sprite))
-
      ; draws player if alive
      (cond
        (is-player-alive
@@ -265,9 +270,11 @@
         (set! player-box      '(-275.0 500.0 64 32))  ; move player off-screen
         (set! dynamic-sprites  (cons game-over-sprite ; display game-over screen
                                       dynamic-sprites))))
-
      ; draws earth
      (set! dynamic-sprites     (cons earth-sprite
+                                      dynamic-sprites))
+     ; draws shield
+     (set! dynamic-sprites     (cons shield-sprite
                                       dynamic-sprites))
      ; draws power-ups
      (set! dynamic-sprites     (append dynamic-sprites
@@ -289,24 +296,23 @@
      (rendering-states->draw layer-config
                              static-sprites
                              dynamic-sprites))
-
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ; WORD-EVENT
    ; captures key events
    (define (word-event w e)
      (match-define (demo) w)
-
+     ; closes window / stops music
      (cond
-       ; closes window / stops music
        [(eq? e 'close)
         (stop) ; stops music
         #f]
 
        ; ESC key
-       ; respawns and resets player
+       ; respawns and resets player / environment
        [(and (key-event? e) (eq? (send e get-key-code) 'escape))
         (set! is-player-alive    #true)
-        (set! player-box         '(-275.0 0.0 64 32))
+        (set! player-box         '(-250.0 0.0 64 32))
         (set! bullet-boxes       '())
         (set! enemy-boxes        '())
         (set! enemy-bullet-boxes '())
@@ -325,7 +331,6 @@
         (set! is-up-input #true)]     ; UP pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) 'up))
         (set! is-up-input #false)]    ; UP released
-
        ; A / LEFT arrow key - left
        [(and (key-event? e) (eq? (send e get-key-code) #\a))
         (set! is-left-input #true)]   ; A pressed
@@ -335,7 +340,6 @@
         (set! is-left-input #true)]   ; LEFT pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) 'left))
         (set! is-left-input #false)]  ; LEFT released
-       
        ; S / DOWN arrow key - down
        [(and (key-event? e) (eq? (send e get-key-code) #\s))
         (set! is-down-input #true)]   ; S pressed
@@ -345,7 +349,6 @@
         (set! is-down-input #true)]   ; DOWN pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) 'down))
         (set! is-down-input #false)]  ; DOWN released
-
        ; D / RIGHT arrow key - right
        [(and (key-event? e) (eq? (send e get-key-code) #\d))
         (set! is-right-input #true)]  ; D pressed
@@ -355,8 +358,7 @@
         (set! is-right-input #true)]  ; RIGHT pressed
        [(and (key-event? e) (eq? (send e get-key-release-code) 'right))
         (set! is-right-input #false)] ; RIGHT released       
-       
-       ; SPACE / CTRL key - fires weapon
+       ; SPACE - fires weapon
        [(and (key-event? e) (eq? (send e get-key-code) #\space))
         ; SPACE pressed        
         (cond
@@ -367,46 +369,46 @@
           ; wave weapon
           ((and (not is-fired-input) is-wave-weapon is-player-alive)
            (fire-projectile wave-index 8 16)
-           (play wave-weapon))        ; play sound)
+           (play wave-weapon))        ; play sound
           ; missile weapon
           ((and (not is-fired-input) is-missile-weapon is-player-alive)
            (fire-projectile missile-index 16 8)
-           (play missile-weapon))        ; play sound)
+           (play missile-weapon))     ; play sound
           ; beam weapon
           ((and (not is-fired-input) is-beam-weapon is-player-alive)
            (fire-projectile beam-index 640 8)
-           (play beam-weapon)))        ; play sound))
+           (play beam-weapon)))       ; play sound
         (set! is-fired-input #true)]
        ; SPACE released
        [(and (key-event? e) (eq? (send e get-key-release-code) #\space))
         (set! is-fired-input #false)]
-
+       ; CTRL key - fires weapon
        [(and (key-event? e) (eq? (send e get-key-code) 'rcontrol))
         ; CTRL pressed        
         (cond
           ; main weapon
           ((and (not is-fired-input) is-main-weapon is-player-alive)
            (fire-projectile main-index 8 8)
-           (play main-weapon))        ; play sound)
+           (play main-weapon))        ; play sound
           ; wave weapon
           ((and (not is-fired-input) is-wave-weapon is-player-alive)
            (fire-projectile wave-index 8 16)
-           (play wave-weapon))        ; play sound)
+           (play wave-weapon))        ; play sound
           ; missile weapon
           ((and (not is-fired-input) is-missile-weapon is-player-alive)
            (fire-projectile missile-index 16 8)
-           (play missile-weapon))        ; play sound)
+           (play missile-weapon))     ; play sound
           ; beam weapon
           ((and (not is-fired-input) is-beam-weapon is-player-alive)
            (fire-projectile beam-index 640 8)
-           (play beam-weapon)))        ; play sound))
+           (play beam-weapon)))       ; play sound
         (set! is-fired-input #true)]
        ; CTRL released
        [(and (key-event? e) (eq? (send e get-key-release-code) 'rcontrol))
         (set! is-fired-input #false)])
      
      (demo))
-
+   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    ; WORD-TICK
    ; tick based frame animation system
@@ -454,14 +456,17 @@
 
         ; randomly selects an enemy from a list of enemies
         (set! random-enemy
-              (list-ref enemy-list (- (random (length enemy-list)) 1)))
+              (list-ref enemy-list (random (length enemy-list))))
 
+        (display " random enemy is ")
+        (display random-enemy)
+        
         ; generate enemies
         (set! enemy-boxes (cons (list 340.0                  ; x location
                                       (- (random 448) 224.0) ; y location
-                                      32                     ; hit-box width
-                                      32                     ; hit-box height
-                                      random-enemy)          ; enemy sprite
+                                      44                     ; hit-box width
+                                      44                     ; hit-box height
+                                      'basic-index)          ; enemy sprite
                                 enemy-boxes))
 
         ; difficulty setting - enemy spawn frequency
@@ -475,7 +480,7 @@
      (make-power-up-boxes)
 
      ; moves power-up-boxes
-     (set! enemy-boxes (move-boxes power-up-boxes power-up-speed))
+     (set! power-up-boxes (move-boxes power-up-boxes power-up-speed))
 
      ; create enemy bullets based on enemy boxes
      (make-enemy-bullets enemy-boxes)
@@ -594,7 +599,7 @@
          '())
      ; return word
      w)])
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; FUNCTIONS
 ; called by word-tick / word-event / word-output
@@ -606,9 +611,9 @@
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
-                       32                       ; hit-box width
-                       32                       ; hit-box height
-                       'beam-power-up-index)    ; sprite name
+                       1                       ; hit-box width
+                       44                       ; hit-box height
+                       ''beam-power-up-index)    ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))
     ; wave weapon
@@ -616,9 +621,9 @@
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
-                       32                       ; hit-box width
+                       2                       ; hit-box width
                        32                       ; hit-box height
-                       'wave-power-up-index)    ; sprite name
+                       ''wave-power-up-index)    ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))
     ; missile weapon
@@ -626,9 +631,9 @@
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
-                       32                       ; hit-box width
+                       3                       ; hit-box width
                        32                       ; hit-box height
-                       'missile-power-up-index) ; sprite name
+                       ''missile-power-up-index) ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))
     ; main weapon
@@ -636,9 +641,9 @@
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
-                       32                       ; hit-box width
+                       4                       ; hit-box width
                        32                       ; hit-box height
-                       'main-power-up-index)    ; sprite name
+                       ''main-power-up-index)    ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))))
 
@@ -650,7 +655,7 @@
      (cons (sprite (car    (car boxes))       ; x location
                    (cadr   (car boxes))       ; y location
                    ;(cadddr (cdr (car boxes))) ; sprite-name
-                   (list-ref (car boxes) 5))  ; sprite name
+                   (list-ref (car boxes) 4))  ; sprite name
                    #:layer 3)
            (make-sprites (cdr boxes)))))
 
@@ -715,6 +720,17 @@
 (define (move-boxes boxes speed)
   (cond
     ((null? boxes) '())
+    ; animates y-axis of power-ups
+    ((or (equal? (list-ref (car boxes) 4) 'shield-power-up)
+         (equal? (list-ref (car boxes) 4) 'main-power-up)
+         (equal? (list-ref (car boxes) 4) 'missile-power-up)
+         (equal? (list-ref (car boxes) 4) 'wave-power-up)
+         (equal? (list-ref (car boxes) 4) 'beam-power-up))
+     (cons (list (+ (car (car boxes)) speed)                    ; x
+                 (+ (cadr   (car boxes)) (random-element list)) ; random y
+                 (caddr  (car boxes))                           ; width
+                 (cadddr (car boxes)))                          ; height
+           (move-boxes (cdr boxes) speed)))
     (else
      (cons (list (+ (car (car boxes)) speed) ; x
                  (cadr   (car boxes))        ; y
@@ -778,7 +794,7 @@
   (cond
     ((null? power-ups) #false)
     ((box-to-box-collision player (car power-ups))
-     (list-ref (car power-ups) 5)) ; collision - returns name of power-up
+     (list-ref (car power-ups) 4)) ; collision - returns name of power-up
     (else (player-power-ups-collision player (cdr power-ups)))))
 
 ; detect collision - a single item against multiple items
@@ -834,7 +850,7 @@
      (set! bullet-boxes (remove (car projectiles) bullet-boxes)) ; remove bullet
      (enemy-projectile-removal enemy (cdr projectiles)))))
 
-; background music - looping
+; loops audio - background music
 (define (play-rsound-loop audio #:init-volume [init-volume 0.3])
   (define myStream (make-pstream #:buffer-time 0.2)) ; create pstream
   (pstream-set-volume! myStream init-volume)         ; set pstream volume
@@ -847,7 +863,13 @@
                             (+ (pstream-current-frame myStream) totalFrames)))
   (thread audioLoop))                                ; puts function into thread
 
-; main
+; allows random selection
+(define (random-element list)
+  (list-ref list (random (length list))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; MAIN
+; main program
 (module+ main
   (play-rsound-loop power-core #:init-volume .3)     ; play background track
   (call-with-chaos
