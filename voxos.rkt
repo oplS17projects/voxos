@@ -11,6 +11,8 @@
 
 ; music
 (define power-core                (rs-read "./sound/power-core.wav"       ))
+;moab
+(define moab                      (rs-read "./sound/moab.wav"      ))
 ; weapons
 (define main-weapon               (rs-read "./sound/main-weapon.wav"      ))
 (define missile-weapon            (rs-read "./sound/missile-weapon.wav"   ))
@@ -36,10 +38,10 @@
 
 ; create sprite database
 (define sprite-db (make-sprite-db))
-
 ; add sprites to database
 (add-sprite!/file sprite-db  'player           "./sprites/player.png"          )
 (add-sprite!/file sprite-db  'earth            "./sprites/earth.png"           )
+(add-sprite!/file sprite-db  'dead-earth       "./sprites/dead-earth.png"      )
 (add-sprite!/file sprite-db  'shield           "./sprites/shield.png"          )
 ; enemies
 (add-sprite!/file sprite-db  'basic            "./sprites/basic.png"           )
@@ -77,6 +79,7 @@
 ; sprite index
 (define player-index              (sprite-idx compiled-db 'player        ))
 (define earth-index               (sprite-idx compiled-db 'earth         ))
+(define dead-earth-index          (sprite-idx compiled-db 'dead-earth    ))
 (define shield-index              (sprite-idx compiled-db 'shield        ))
 ; enemies
 (define basic-index               (sprite-idx compiled-db 'basic         ))
@@ -126,6 +129,7 @@
 
 ; state variables
 (define is-player-alive      #true) ; player       state
+(define is-earth-alive       #true) ; earth        state
 (define is-main-weapon       #true) ; main         weapon
 (define is-missile-weapon   #false) ; missile      weapon
 (define is-wave-weapon      #false) ; wave         weapon
@@ -188,8 +192,8 @@
 (define secondary-bg-y         0.0) ; secondary bg      - y position
 (define tile-secondary-bg-x  640.0) ; tile-secondary bg - x position
 (define tile-secondary-bg-y    0.0) ; tile-secondary bg - y position
-(define secondary-bg-speed    0.75) ; secondary bg      - movement speed
-(define main-bg-speed          0.5) ; main bg           - movement speed
+(define secondary-bg-speed       1) ; secondary bg      - movement speed
+(define main-bg-speed          0.3) ; main bg           - movement speed
 
 ; static sprites - not animated
 (define static-bg-sprite          (sprite 0.0 0.0 static-bg-index #:layer 0))
@@ -240,19 +244,23 @@
                tile-secondary-bg-y
                secondary-bg-index
                #:layer 2))
+
      ; earth sprite
-     (define earth-sprite      (sprite 0.0
-                                       0.0
-                                       earth-index #:layer 3))
+     (define earth-sprite
+       (cond
+         ((not is-earth-alive)
+          (sprite 0.0
+                  0.0
+                  dead-earth-index #:layer 3))
+         (else
+          (sprite 0.0
+                  0.0
+                  earth-index #:layer 3))))
      ; shield sprite
      (define shield-sprite      (sprite 0.0
                                         0.0
                                         #:a shield-alpha
                                         shield-index #:layer 3))
-
-     (newline)
-     (display shield-alpha)
-     
      ; player sprite
      (define player-sprite     (sprite (car player-box)
                                        (cadr player-box)
@@ -275,12 +283,6 @@
         (set! player-box      '(-275.0 500.0 64 32))  ; move player off-screen
         (set! dynamic-sprites  (cons game-over-sprite ; display game-over screen
                                       dynamic-sprites))))
-
-     ; draws static-bg
-     ;(set! dynamic-sprites     (cons static-bg-sprite
-      ;                                dynamic-sprites))
-
-
      ; draws earth
      (set! dynamic-sprites     (cons earth-sprite
                                       dynamic-sprites))
@@ -319,10 +321,19 @@
         (stop) ; stops music
         #f]
 
+       [(and (key-event? e) (eq? (send e get-key-code) 'f4))
+        (display "Enemy box count: ")
+        (display (length enemy-boxes))
+        (newline)
+        (display "powerup box count: ")
+        (display (length power-up-boxes))
+        (newline)]
+
        ; ESC key
        ; respawns and resets player / environment
        [(and (key-event? e) (eq? (send e get-key-code) 'escape))
-        (set! is-player-alive    #true)
+        (set! is-player-alive   #true)
+        (set! is-earth-alive    #true)
         (set! player-box         '(-250.0 0.0 64 32))
         (set! bullet-boxes       '())
         (set! enemy-boxes        '())
@@ -392,7 +403,7 @@
            (play missile-weapon))     ; play sound
           ; beam weapon
           ((and (not is-fired-input) is-beam-weapon is-player-alive)
-           (fire-projectile beam-index 640 8)
+           (fire-projectile beam-index 20 4)
            (play beam-weapon)))       ; play sound
         (set! is-fired-input #true)]
        ; SPACE released
@@ -416,7 +427,7 @@
            (play missile-weapon))     ; play sound
           ; beam weapon
           ((and (not is-fired-input) is-beam-weapon is-player-alive)
-           (fire-projectile beam-index 640 8)
+           (fire-projectile beam-index 20 4)
            (play beam-weapon)))       ; play sound
         (set! is-fired-input #true)]
        ; CTRL released
@@ -454,11 +465,13 @@
         (set! secondary-bg-x (- secondary-bg-x secondary-bg-speed))
         (set! tile-secondary-bg-x (- tile-secondary-bg-x secondary-bg-speed))))
 
-     ; removes off-screen bullets - player / enemy
+     ; removes off-screen player-bullets, enemy-bullets, powerups
      (set! bullet-boxes
            (filter (lambda (e) (< (car e) 340))  bullet-boxes))
      (set! enemy-bullet-boxes
            (filter (lambda (e) (> (car e) -340)) enemy-bullet-boxes))
+     (set! power-up-boxes
+           (filter (lambda (e) (> (car e) -340)) power-up-boxes))
      
      ; moves bullet-boxes - player / enemy
      (set! bullet-boxes
@@ -519,11 +532,32 @@
      (cond
        ((or (box-to-list-collision player-box enemy-boxes)
              (box-to-list-collision player-box enemy-bullet-boxes))
-        (set! explosion-boxes (cons (list (car    player-box) ; x
-                                          (cadr   player-box) ; y
-                                          (caddr  player-box) ; hit-box width
-                                          (cadddr player-box) ; hit-box height
-                                          0)                  ; tick
+        (set! explosion-boxes (append (list
+                                       (list (+ (car    player-box) 10); x
+                                             (+ (cadr   player-box) 0) ; y
+                                             0                         ; width
+                                             0                         ; height
+                                             -40)                      ; tick
+                                       (list (+ (car    player-box) 0) ; x
+                                             (+ (cadr   player-box) 10); y
+                                             0                         ; width
+                                             0                         ; height
+                                             -30)                      ; tick
+                                       (list (+ (car    player-box) -10); x
+                                             (+ (cadr   player-box) 0) ; y
+                                             0                         ; width
+                                             0                         ; height
+                                             -20)                      ; tick
+                                       (list (+ (car    player-box) 0) ; x
+                                             (+ (cadr   player-box) -10); y
+                                             0                         ; width
+                                             0                         ; height
+                                             -10)                      ; tick
+                                       (list (+ (car    player-box) 0) ; x
+                                             (+ (cadr   player-box) 0) ; y
+                                             0                         ; width
+                                             0                         ; height
+                                             0))                        ; tick
                                     explosion-boxes))
         (play small-explosion)                                ; play sound
         (play player-explosion)                               ; play sound
@@ -541,7 +575,7 @@
          (eq? current-power-up
                  'shield-power-up)
          (< shield-strength shield-cap))
-        (set! shield-strength (+ shield-strength 5))
+        (set! shield-strength (+ shield-strength 10))
         (play shield-power-up))
        ; main weapon power-up
        ((and
@@ -582,8 +616,34 @@
 
      ; set shield transparency depending on shield strength
      (cond
-       ((<= shield-strength 0)
-        (set! shield-alpha 0.0))
+       ((and (= shield-strength 0) is-earth-alive)
+        (set! shield-alpha 0.0)
+        ; explosions around earth
+        (set! explosion-boxes
+              (append '((-300. -225. 32 32 -93)
+                        (-294. -200. 32 32 -88)
+                        (-289. -175. 32 32 -83)
+                        (-284. -150. 32 32 -78)
+                        (-277. -125. 32 32 -74)
+
+                        (-270. -100. 32 32 -69)
+                        (-266. -75.  32 32 -64)
+                        (-263. -50.  32 32 -60)
+                        (-258. -25.  32 32 -54)
+                        (-255.   0.  32 32 -49)
+
+                        (-258. 25.  32 32 -47)
+                        (-261. 50.  32 32 -42)
+                        (-269. 75.  32 32 -37)
+                        (-275. 100. 32 32 -31)
+                        (-278. 125. 32 32 -25)
+                        (-283. 150. 32 32 -18)
+                        (-289. 175. 32 32 -13)
+                        (-294. 200. 32 32 -5)
+                        (-300. 225. 32 32 0))
+                    explosion-boxes))
+        (play moab)
+        (set! is-earth-alive #false))
        ((< shield-strength 100)
         (set! shield-alpha (+ .5 (* .5 (/ (+ 0.0 shield-strength) 100))))))
 
@@ -678,7 +738,7 @@
                  power-up-boxes))
      (make-power-up-boxes))
     ; beam weapon
-    ((< (random 10000) 15)
+    ((< (random 10000) 4)
      (set! power-up-boxes
            (cons (list 340.0                    ; x location
                        (- (random 448) 224.0)   ; y location
@@ -739,8 +799,8 @@
      (set! enemy-bullet-boxes
            (cons (list (car    (car enemies))        ; x location
                        (cadr   (car enemies))        ; y location
-                       (caddr  (car enemies))        ; hit-box width
-                       (cadddr (car enemies))        ; hit-box height
+                       8                             ; hit-box width
+                       8                             ; hit-box height
                        enemy-index)                  ; sprite name
                  enemy-bullet-boxes))
      (make-enemy-bullets (cdr enemies)))
@@ -776,7 +836,7 @@
   (cond
     ((null? explosions)
      '())
-    ((<= (cadddr (cdr (car explosions))) 15)            ; tick threshold
+    ((<= (cadddr (cdr (car explosions))) 30)            ; tick threshold
      (cons (list (car    (car explosions))              ; x
                  (cadr   (car explosions))              ; y
                  (caddr  (car explosions))              ; width
@@ -804,6 +864,9 @@
                  (cadddr (car boxes))
                  (cadddr (cdr (car boxes))))                          ; height
            (move-boxes (cdr boxes) speed)))
+    ((eq? (cadddr (cdr (car boxes))) beam-index)
+     (cons (car boxes)
+           (move-boxes (cdr boxes) speed)))
     (else
      (cons (list (+ (car (car boxes)) speed) ; x
                  (cadr   (car boxes))        ; y
@@ -816,18 +879,22 @@
 (define (make-explosion-sprites boxes)
   (cond
     ((null? boxes) '())
+    ((< (cadddr (cdr (car boxes))) 0)
+     (make-explosion-sprites (cdr boxes)))
     (else          
      (cons (sprite (car (car boxes))
                    (cadr (car boxes))
                    ; determine which sprite to use based on the tick
                    ; parameter stored in the sub-list
                    (cond
-                     ((<= (cadddr (cdr (car boxes))) 5)
-                      explosion-1-index)     ; explosion frame 1
-                     ((<= (cadddr (cdr (car boxes))) 10)
-                      explosion-2-index)     ; explosion frame 2
+                     ((<= (cadddr (cdr (car boxes))) 7)
+                      explosion-2-index)     ; explosion frame
+                     ((<= (cadddr (cdr (car boxes))) 14)
+                      explosion-3-index)     ; explosion frame
+                     ((<= (cadddr (cdr (car boxes))) 21)
+                      explosion-2-index)     ; explosion frame
                      (else
-                      explosion-3-index))    ; explosion frame 3
+                      explosion-1-index))    ; explosion frame
                    ; end sprite index selection
                    #:layer 3)
            (make-explosion-sprites (cdr boxes))))))
