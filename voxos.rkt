@@ -486,7 +486,7 @@
 
         ; randomly selects an enemy from a list of enemies
         (set! random-enemy
-              (list-ref enemy-list (random 3)))
+              (list-ref enemy-list (random 4)))
 
         ;(display "\n random enemy variable is ")
         ;(display random-enemy)
