@@ -25,7 +25,6 @@ The code uses three libraries:
 (require rsound)
 (require mode-lambda)
 (require lux)
-
 ```
 
 * The ```lux``` library provides the ability to create interactive programs
