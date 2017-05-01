@@ -12,14 +12,14 @@ It was a fun way to explore a real world project using Racket.
 The code uses a number of techniques learned from class.
 The techniques used include: recursion, filter, and some state modification.
 
-**Authorship note:** All of the code, artwork, and sound effects described here was written by myself.
+**Authorship note:** ALL of the code, artwork, and sound effects described here was written by myself.
 
 
 ![Voxos:](https://raw.githubusercontent.com/oplS17projects/voxos/master/voxos-screen-1.png)
 
 
 # Libraries Used
-The code uses four libraries:
+The code uses three libraries:
 
 ```
 (require rsound)
@@ -42,13 +42,14 @@ Here are some core code samples that exemplify the techniques learned in class.
 
 The examples are shown below, and they are individually numbered.
 
-## 1. Initialization using a Global Object
+## 1. Initialization - using a Global Object
 
 The following code creates a global object, ```compiled-db```
 that is heavily used to draw sprites to the screen:
 
 
 ```
+
 ; compile sprite database
 (define compiled-db
   (compile-sprite-db sprite-db))
@@ -95,7 +96,7 @@ Here are some sprite indexes:
 
 ```
 
-## 2. Filtering a List to cull off-screen elements
+## 2. Filter - removal of off-screen elements
 
 There are elements that needed removal once they moved off-screen:
 
@@ -104,12 +105,7 @@ There are elements that needed removal once they moved off-screen:
 * Enemies
 * Power-ups
 
-
-
 There are three main calls utilizing ```filter``` that accomplish these tasks.
-
-
-The lambda procedure examines the x-axis location of each element:
 
 ```
 
@@ -130,7 +126,10 @@ The lambda procedure examines the x-axis location of each element:
 
 ```
 
-## 3. State modification - utilized in the Lux Word object
+The lambda procedure examines the x-axis location of each element.
+
+
+## 3. State Modification - utilized in the Lux Word object
 
 During each tick of abstract time, a ```word``` object is returned.
 
@@ -161,10 +160,10 @@ State modification using ```set!``` to accomplish many tasks as the game runs.
 
 ```
 
-
 * animating enemy projectiles:
 
 ```
+
 ; moves enemy projectiles
 (set! enemy-bullet-boxes
   (move-boxes
@@ -172,14 +171,14 @@ State modification using ```set!``` to accomplish many tasks as the game runs.
 
 ```
 
+
 ## 4. Recursion - accomplishes nearly all major tasks
 
-Recursion is the most heavily used technique in voxos. Recursion is
+Recursion is the most heavily used technique in Voxos. Recursion is
 used to draw sprites, detect collision detection, create animation,
 and much more.
 
 Here are three major examples of recursion:
-
 
 * Sprite Drawing
 
@@ -203,7 +202,6 @@ handles the majority of sprite drawing:
 
 ```make-sprites``` uses recursion to process the list of sprites to be drawn.
 
-
 * Collision Detection
 
 The function ```box-to-list-collision``` handles collision detection:
@@ -218,15 +216,13 @@ The function ```box-to-list-collision``` handles collision detection:
 
 ```
 
-```box-to-list``` uses recursion for collision detection between
+```box-to-list-collision``` uses recursion for collision detection between
 a single element against a list of multiple elements. An example may
 be detecting collision between the player and multiple projectiles.
-
 
 * Firing Projectiles
 
 The function ```enemy-projectile-removal``` handles destroyed enemies:
-
 
 ```
 
@@ -276,4 +272,6 @@ explosion animation.
 - all sound effects - sound effects, sound processing
 - all music - music, music processing, streaming objects
 
+
 ![Voxos:](https://raw.githubusercontent.com/oplS17projects/voxos/master/voxos-screen-4.png)
+
