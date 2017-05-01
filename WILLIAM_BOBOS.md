@@ -15,7 +15,7 @@ The techniques used include: recursion, filter, and some state modification.
 **Authorship note:** All of the code, artwork, and sound effects described here was written by myself.
 
 
-![Voxos:](https://raw.githubusercontent.com/oplS17projects/voxos/master/voxos-screen-1.jpg)
+![Voxos:](https://raw.githubusercontent.com/oplS17projects/voxos/master/voxos-screen-1.png)
 
 
 # Libraries Used
@@ -34,7 +34,7 @@ The code uses four libraries:
 
 * The ```rsound``` library is used to read, write, and play sounds
 
-![Voxos:](https://raw.githubusercontent.com/oplS17projects/voxos/master/voxos-screen-2.jpg)
+![Voxos:](https://raw.githubusercontent.com/oplS17projects/voxos/master/voxos-screen-2.png)
 
 # Key Code Excerpts
 
@@ -260,7 +260,7 @@ destroyed enemy, the associated projectile, updates the score, and queues an
 explosion animation.
 
 
-![Voxos:](https://raw.githubusercontent.com/oplS17projects/voxos/master/voxos-screen-3.jpg)
+![Voxos:](https://raw.githubusercontent.com/oplS17projects/voxos/master/voxos-screen-3.png)
 
 
 # Responsibilities
@@ -276,4 +276,4 @@ explosion animation.
 - all sound effects - sound effects, sound processing
 - all music - music, music processing, streaming objects
 
-![Voxos:](https://raw.githubusercontent.com/oplS17projects/voxos/master/voxos-screen-4.jpg)
+![Voxos:](https://raw.githubusercontent.com/oplS17projects/voxos/master/voxos-screen-4.png)
