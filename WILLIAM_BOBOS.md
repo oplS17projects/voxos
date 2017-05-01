@@ -48,7 +48,6 @@ that is heavily used to draw sprites to the screen:
 
 
 ```
-
 ; compile sprite database
 (define compiled-db
   (compile-sprite-db sprite-db))
@@ -60,7 +59,6 @@ that is heavily used to draw sprites to the screen:
 ; loads compiled database
 (define compiled-db
   (load-csd "voxos-sprite-db"))
-
 ```
 
 Sprites are drawn to the screen using Mode-Lambda calls. The sprites are
@@ -69,7 +67,6 @@ referenced using an index from the ```compiled-db```:
 Here are some sprite indexes:
 
 ```
-
 ; misc
 (define player-index              (sprite-idx compiled-db 'player        ))
 (define earth-index               (sprite-idx compiled-db 'earth         ))
@@ -92,7 +89,6 @@ Here are some sprite indexes:
 (define wave-power-up-index     (sprite-idx compiled-db 'wave-power-up   ))
 (define beam-power-up-index     (sprite-idx compiled-db 'beam-power-up   ))
 (define shield-power-up-index   (sprite-idx compiled-db 'shield-power-up ))
-
 ```
 
 ## 2. Filter - removal of off-screen elements
@@ -107,7 +103,6 @@ There are elements that needed removal once they moved off-screen:
 There are three main calls utilizing ```filter``` that accomplish these tasks.
 
 ```
-
 ; removes off-screen player-bullets, enemy-bullets, powerups
 
 ; removes player projectiles
@@ -122,7 +117,6 @@ There are three main calls utilizing ```filter``` that accomplish these tasks.
 ; removes power-ups
 (set! power-up-boxes
   (filter (lambda (e) (> (car e) -340)) power-up-boxes))
-
 ```
 
 The lambda procedure examines the x-axis location of each element.
@@ -140,34 +134,28 @@ State modification using ```set!``` to accomplish many tasks as the game runs.
 * animating player projectiles:
 
 ```
-
 ; moves player projectiles
 (set! bullet-boxes
   (move-boxes
     bullet-boxes projectile-speed))
-
 ```
 
 * animating explosions:
 
 ```
-
 ; animates explosions
 (set! explosion-boxes
   (move-explosion-boxes
     explosion-boxes))
-
 ```
 
 * animating enemy projectiles:
 
 ```
-
 ; moves enemy projectiles
 (set! enemy-bullet-boxes
   (move-boxes
     enemy-bullet-boxes enemy-bullet-speed))
-
 ```
 
 
@@ -185,7 +173,6 @@ The sprite creation function ```make-sprites```
 handles the majority of sprite drawing:
 
 ```
-
 ; sprite creation
 (define (make-sprites boxes)
   (cond
@@ -196,7 +183,6 @@ handles the majority of sprite drawing:
                    (cadddr (cdr (car boxes))) ; sprite-name
                    #:layer 3)
            (make-sprites (cdr boxes))))))
-
 ```
 
 ```make-sprites``` uses recursion to process the list of sprites to be drawn.
@@ -206,13 +192,11 @@ handles the majority of sprite drawing:
 The function ```box-to-list-collision``` handles collision detection:
 
 ```
-
 (define (box-to-list-collision box boxes)
   (cond
     ((null? boxes) #false)
     ((box-to-box-collision box (car boxes)) #true)
     (else (box-to-list-collision box (cdr boxes)))))
-
 ```
 
 ```box-to-list-collision``` uses recursion for collision detection between
@@ -224,7 +208,6 @@ be detecting collision between the player and multiple projectiles.
 The function ```enemy-projectile-removal``` handles destroyed enemies:
 
 ```
-
 ; removes killed enemy / projectiles
 (define (enemy-projectile-removal enemy projectiles)
   (cond
@@ -247,7 +230,6 @@ The function ```enemy-projectile-removal``` handles destroyed enemies:
      (set! enemy-boxes  (remove enemy enemy-boxes))              ; remove enemy
      (set! bullet-boxes (remove (car projectiles) bullet-boxes)) ; remove bullet
      (enemy-projectile-removal enemy (cdr projectiles)))))
-
 ```
 
 ```enemy-projectile-removal``` uses recursion to remove a
