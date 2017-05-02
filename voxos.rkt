@@ -57,7 +57,11 @@
 (add-sprite!/file sprite-db  'missile-weapon   "./sprites/missile-weapon.png"  )
 (add-sprite!/file sprite-db  'wave-weapon      "./sprites/wave-weapon.png"     )
 (add-sprite!/file sprite-db  'beam-weapon      "./sprites/beam-weapon.png"     )
-(add-sprite!/file sprite-db  'enemy-weapon     "./sprites/enemy-weapon.png"    )
+; enemy weapons
+(add-sprite!/file sprite-db  'basic-weapon     "./sprites/basic-bullet.png"    )
+(add-sprite!/file sprite-db  'droid-weapon     "./sprites/droid-bullet.png"    )
+(add-sprite!/file sprite-db  'fighter-weapon   "./sprites/fighter-bullet.png"  )
+(add-sprite!/file sprite-db  'bomber-weapon    "./sprites/bomber-bullet.png"   )
 ; game-over screen
 (add-sprite!/file sprite-db  'game-over        "./sprites/game-over.png"       )
 ; explosion frames
@@ -95,7 +99,11 @@
 (define missile-index             (sprite-idx compiled-db 'missile-weapon))
 (define wave-index                (sprite-idx compiled-db 'wave-weapon   ))
 (define beam-index                (sprite-idx compiled-db 'beam-weapon   ))
-(define enemy-index               (sprite-idx compiled-db 'enemy-weapon  ))
+; enemy weapons
+(define basic-weapon-index        (sprite-idx compiled-db 'basic-weapon  ))
+(define droid-weapon-index        (sprite-idx compiled-db 'droid-weapon  ))
+(define fighter-weapon-index      (sprite-idx compiled-db 'fighter-weapon))
+(define bomber-weapon-index       (sprite-idx compiled-db 'bomber-weapon ))
 ; power-ups
 (define main-power-up-index     (sprite-idx compiled-db 'main-power-up   ))
 (define missile-power-up-index  (sprite-idx compiled-db 'missile-power-up))
@@ -139,10 +147,10 @@
 (define tick-counter             0) ; tick         counter
 (define shield-cap             125) ; max          shield
 (define enemy-frequency         15) ; enemy        frequency
-(define player-speed             3) ; player       speed
+(define player-speed             4) ; player       speed
 (define projectile-speed        10) ; bullet       speed
 (define power-up-speed          -1) ; power-up     speed
-(define enemy-bullet-speed      -4) ; enemy bullet speed
+(define enemy-bullet-speed      -2) ; enemy bullet speed
 (define enemy-speed             -2) ; enemy        speed
 (define shield-strength        100) ; shield       strength
 (define player-score             0) ; player       score
@@ -734,7 +742,7 @@
                        (- (random 448) 224.0)   ; y location
                        32                       ; hit-box width
                        32                       ; hit-box height
-                       'shield-power-up)    ; sprite name
+                       'shield-power-up)        ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))
     ; beam weapon
@@ -744,7 +752,7 @@
                        (- (random 448) 224.0)   ; y location
                        32                       ; hit-box width
                        32                       ; hit-box height
-                       'beam-power-up)    ; sprite name
+                       'beam-power-up)          ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))
     ; wave weapon
@@ -754,7 +762,7 @@
                        (- (random 448) 224.0)   ; y location
                        32                       ; hit-box width
                        32                       ; hit-box height
-                       'wave-power-up)    ; sprite name
+                       'wave-power-up)          ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))
     ; missile weapon
@@ -764,7 +772,7 @@
                        (- (random 448) 224.0)   ; y location
                        32                       ; hit-box width
                        32                       ; hit-box height
-                       'missile-power-up) ; sprite name
+                       'missile-power-up)       ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))
     ; main weapon
@@ -774,7 +782,7 @@
                        (- (random 448) 224.0)   ; y location
                        32                       ; hit-box width
                        32                       ; hit-box height
-                       'main-power-up)    ; sprite name
+                       'main-power-up)          ; sprite name
                  power-up-boxes))
      (make-power-up-boxes))))
 
@@ -786,12 +794,39 @@
      (cons (sprite (car    (car boxes))       ; x location
                    (cadr   (car boxes))       ; y location
                    (cadddr (cdr (car boxes))) ; sprite-name
-                   ;(list-ref (car boxes) 3)   ; sprite name
                    #:layer 3)
            (make-sprites (cdr boxes))))))
 
 ; enemy bullet creation
 (define (make-enemy-bullets enemies)
+  (define sprite-index 0)
+  (define enemy-bullet-index 0)
+  (define hit-box-x 8)
+  (define hit-box-y 8)
+  (if (null? enemies)
+      '()
+      (begin
+        (set! sprite-index (list-ref (car enemies) 4))
+        ; determine which sprite index to use
+        ; at the moment, all use the same bullet sprite and hit boxes
+          (cond
+          ((= sprite-index basic-index)
+           (set! enemy-bullet-index basic-weapon-index)
+           (set! hit-box-x 8)
+           (set! hit-box-y 8))
+          ((= sprite-index droid-index)
+           (set! enemy-bullet-index droid-weapon-index)
+           (set! hit-box-x 8)
+           (set! hit-box-y 8))
+          ((= sprite-index fighter-index)
+           (set! enemy-bullet-index fighter-weapon-index)
+           (set! hit-box-x 8)
+           (set! hit-box-y 8))
+          ((= sprite-index bomber-index)
+           (set! enemy-bullet-index bomber-weapon-index)
+           (set! hit-box-x 8)
+           (set! hit-box-y 8)))))
+  ; create bullet
   (cond
     ((null? enemies)
      '())
@@ -799,9 +834,9 @@
      (set! enemy-bullet-boxes
            (cons (list (car    (car enemies))        ; x location
                        (cadr   (car enemies))        ; y location
-                       8                             ; hit-box width
-                       8                             ; hit-box height
-                       enemy-index)                  ; sprite name
+                       hit-box-x                     ; hit-box width
+                       hit-box-y                     ; hit-box height
+                       enemy-bullet-index)           ; sprite name
                  enemy-bullet-boxes))
      (make-enemy-bullets (cdr enemies)))
     (else (make-enemy-bullets (cdr enemies)))))
@@ -857,22 +892,18 @@
          (eq? (list-ref (car boxes) 4) 'missile-power-up)
          (eq? (list-ref (car boxes) 4) 'wave-power-up)
          (eq? (list-ref (car boxes) 4) 'beam-power-up))
-     (cons (list (+ (car (car boxes)) speed)                    ; x
-                 ;(+ (cadr   (car boxes)) (random-element number-list)) ; random y
+     (cons (list (+ (car (car boxes)) speed)                ; x
                  (* 100 (sin (/ (car   (car boxes)) 60.0))) ; random y
-                 (caddr  (car boxes))                           ; width
-                 (cadddr (car boxes))
-                 (cadddr (cdr (car boxes))))                          ; height
+                 (caddr  (car boxes))                       ; width
+                 (cadddr (car boxes))                       ; height
+                 (cadddr (cdr (car boxes))))                ; sprite name
            (move-boxes (cdr boxes) speed)))
-;    ((eq? (cadddr (cdr (car boxes))) beam-index)
-;     (cons (car boxes)
-;           (move-boxes (cdr boxes) speed)))
     (else
      (cons (list (+ (car (car boxes)) speed) ; x
                  (cadr   (car boxes))        ; y
                  (caddr  (car boxes))        ; width
                  (cadddr (car boxes))        ; height
-                 (cadddr (cdr (car boxes))))
+                 (cadddr (cdr (car boxes)))) ; sprite name
            (move-boxes (cdr boxes) speed)))))
 
 ; creates a list of animated explosion sprites
@@ -958,7 +989,7 @@
   (define distance-y (abs (- box1-y box2-y)))
   
   (if (and (< distance-x sum-radii-x) (< distance-y sum-radii-y))
-      #true ;; collision detected
+      #true ; collision detected
       #false))
 
 ; detect collision - enemy against projectiles
@@ -1013,7 +1044,7 @@
 ; MAIN
 ; main program
 (module+ main
-  (play-rsound-loop power-core #:init-volume 1.0)     ; play background track
+  (play-rsound-loop power-core #:init-volume 1.0)    ; play background track
   (call-with-chaos
    (make-gui #:mode 'gl-core
              #:width canvas-size-x
