@@ -180,9 +180,6 @@
         droid-index
         bomber-index
         fighter-index))
-(define number-list
-  (list -5 -4 -3 -2 -1 0
-        1  2  3  4  5))             ; number       list
 
 ; player control input toggles
 (define is-up-input         #false) ; up
@@ -453,33 +450,11 @@
      (set! explosion-boxes
            (move-explosion-boxes explosion-boxes))
 
-    
-     ; move main background
-     (cond
-       ((<= main-bg-x -640)
-        (set! main-bg-x 640.0))
-       ((<= tile-main-bg-x -640)
-        (set! tile-main-bg-x 640.0))
-       (else
-        (set! main-bg-x (- main-bg-x main-bg-speed))
-        (set! tile-main-bg-x (- tile-main-bg-x main-bg-speed))))
-     ; move secondary background
-     (cond
-       ((<= secondary-bg-x -640)
-        (set! secondary-bg-x 640.0))
-       ((<= tile-secondary-bg-x -640)
-        (set! tile-secondary-bg-x 640.0))
-       (else
-        (set! secondary-bg-x (- secondary-bg-x secondary-bg-speed))
-        (set! tile-secondary-bg-x (- tile-secondary-bg-x secondary-bg-speed))))
-
+     ; parallax background animation
+     (animate-backgrounds)
+     
      ; removes off-screen player-bullets, enemy-bullets, powerups
-     (set! bullet-boxes
-           (filter (lambda (e) (< (car e) 340))  bullet-boxes))
-     (set! enemy-bullet-boxes
-           (filter (lambda (e) (> (car e) -340)) enemy-bullet-boxes))
-     (set! power-up-boxes
-           (filter (lambda (e) (> (car e) -340)) power-up-boxes))
+     (remove-offscreen-elements)
      
      ; moves bullet-boxes - player / enemy
      (set! bullet-boxes
@@ -694,6 +669,36 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; FUNCTIONS
 ; called by word-tick / word-event / word-output
+
+; removes off-screen elements
+(define (remove-offscreen-elements)
+  (set! bullet-boxes
+        (filter (lambda (e) (< (car e) 340))  bullet-boxes))
+  (set! enemy-bullet-boxes
+        (filter (lambda (e) (> (car e) -340)) enemy-bullet-boxes))
+  (set! power-up-boxes
+        (filter (lambda (e) (> (car e) -340)) power-up-boxes)))
+
+; animates two backgrounds
+(define (animate-backgrounds)
+  ; move main background
+  (cond
+    ((<= main-bg-x -640)
+     (set! main-bg-x 640.0))
+    ((<= tile-main-bg-x -640)
+     (set! tile-main-bg-x 640.0))
+    (else
+     (set! main-bg-x (- main-bg-x main-bg-speed))
+     (set! tile-main-bg-x (- tile-main-bg-x main-bg-speed))))
+  ; move secondary background
+  (cond
+    ((<= secondary-bg-x -640)
+     (set! secondary-bg-x 640.0))
+    ((<= tile-secondary-bg-x -640)
+     (set! tile-secondary-bg-x 640.0))
+    (else
+     (set! secondary-bg-x (- secondary-bg-x secondary-bg-speed))
+     (set! tile-secondary-bg-x (- tile-secondary-bg-x secondary-bg-speed)))))
 
 ; power-up sprite creation
 (define (make-power-up-sprites boxes)
